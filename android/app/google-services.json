@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "602374798151",
+    "project_id": "teddy-bear-s-diary",
+    "storage_bucket": "teddy-bear-s-diary.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602374798151:android:1c18b8a86a06cb3e242a62",
+        "android_client_info": {
+          "package_name": "com.example.create"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "602374798151-llf0jk55v68bjqlplsrl8mmrp5lqqofj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.create",
+            "certificate_hash": "f2edc1ffddc7f434ae5327cb38c28a92422e91c5"
+          }
+        },
+        {
+          "client_id": "602374798151-lss0jkka16f3okjr2tgr4ji9o16od9f9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtippfZ7Geq0YE-KAkVYfHm1bbDD8gtdw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "602374798151-lss0jkka16f3okjr2tgr4ji9o16od9f9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "602374798151-66e822cvtfch4qeunpgr3s6vbnk3i2qi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.create"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
