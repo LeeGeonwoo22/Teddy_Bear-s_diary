@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../common/global.dart';
+
 // Google Sign-In Service Class
 class GoogleSignInService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -11,7 +13,8 @@ class GoogleSignInService {
     if (!isInitialize) {
       await _googleSignIn.initialize(
         serverClientId:
-        '484988555302-d91nev5jn5sit0qoe3oehpgpp58pl5mt.apps.googleusercontent.com',
+        // '602374798151-lss0jkka16f3okjr2tgr4ji9o16od9f9.apps.googleusercontent.com'
+        Server_Client_ID
       );
     }
     isInitialize = true;

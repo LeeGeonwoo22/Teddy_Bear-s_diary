@@ -64,6 +64,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '602374798151',
     projectId: 'teddy-bear-s-diary',
     storageBucket: 'teddy-bear-s-diary.firebasestorage.app',
+    androidClientId: '602374798151-llf0jk55v68bjqlplsrl8mmrp5lqqofj.apps.googleusercontent.com',
+    iosClientId: '602374798151-66e822cvtfch4qeunpgr3s6vbnk3i2qi.apps.googleusercontent.com',
     iosBundleId: 'com.example.create',
   );
 
@@ -73,6 +75,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '602374798151',
     projectId: 'teddy-bear-s-diary',
     storageBucket: 'teddy-bear-s-diary.firebasestorage.app',
+    androidClientId: '602374798151-llf0jk55v68bjqlplsrl8mmrp5lqqofj.apps.googleusercontent.com',
+    iosClientId: '602374798151-66e822cvtfch4qeunpgr3s6vbnk3i2qi.apps.googleusercontent.com',
     iosBundleId: 'com.example.create',
   );
 
@@ -85,4 +89,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'teddy-bear-s-diary.firebasestorage.app',
     measurementId: 'G-PJLG5NM8H5',
   );
+
 }

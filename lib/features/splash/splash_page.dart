@@ -23,12 +23,12 @@ class _SplashPageState extends State<SplashPage> {
     Onboard(
       title: '소중한 너를 지키고 싶어',
       subtitle: '너가 내 곁에서 잠들어 있는 동안, 너의 꿈속에 들어오려는 악몽 괴물로부터 너를 지켜주는 일을 하고있어. 얼굴에 반창고도 이때 생긴 흉터란다..',
-      image: 'assets/images/onBoarding_3.png',
+      image: 'assets/images/onBoarding_2.png',
     ),
     Onboard(
       title: '이야기 해줄래?',
       subtitle: '나는 언제든지 너의 이야기를 들어줄 준비가 되어있어. 너가 나에게 사랑을 주는 순간 나는 평범한 곰인형이 아니게 되었어.. 항상 고마워. 너는 나에게 소중한 존재야.. ',
-      image: 'assets/images/onBoarding_4.png',
+      image: 'assets/images/onBoarding_3.png',
     ),
     Onboard(
       title: '나랑 같이 이야기해요',

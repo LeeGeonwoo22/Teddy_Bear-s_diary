@@ -2,9 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/google.dart';
-import '../../auth/phone.dart';
 import '../../widgets/custom_btn.dart';
-import '../login/login.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
