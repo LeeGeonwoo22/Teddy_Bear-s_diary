@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../common/global.dart';
+
 import '../../controller/chat_controller.dart';
 import 'package:get/get.dart';
 
-import '../../widgets/messageCard.dart';
+import '../../core/common/global.dart';
+import '../../core/widgets/messageCard.dart';
+
+
 
 class ChatbotFeature extends StatefulWidget {
   const ChatbotFeature({super.key});

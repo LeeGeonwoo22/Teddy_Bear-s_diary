@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:teddyBear/model/board_splash.dart';
-import 'package:teddyBear/widgets/custom_btn.dart';
+
+import '../../core/widgets/custom_btn.dart';
+import '../../data/model/board_splash.dart';
+
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
