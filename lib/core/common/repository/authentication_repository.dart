@@ -1,6 +1,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:teddyBear/model/user_model.dart';
+
+import '../../../data/model/user_model.dart';
 
 class AuthenticationRepository{
   final FirebaseAuth _firebaseAuth;

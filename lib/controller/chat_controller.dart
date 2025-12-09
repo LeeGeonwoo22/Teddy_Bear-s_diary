@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../api/apis.dart';
-import '../model/message.dart';
+import '../core/api/apis.dart';
+import '../data/model/message.dart';
+
 
 class ChatController extends GetxController {
   final scrollC = ScrollController();
