@@ -1,0 +1,19 @@
+flutter_native_splash:
+  android: true
+  ios: true
+  web: false
+  color: "#F5E2B8"
+  image: "assets/images/native_splash/onBoarding_1.png"
+  branding: "assets/images/native_splash/Teddy bear's diary_branding.png"
+  # Android 12 이상 (Material You)
+
+  android_12:
+    image : "assets/images/native_splash/onBoarding_1.png"
+    branding : "assets/images/native_splash/Teddy bear's diary_branding.png"
+    color: "#F5E2B8"
+
+  # 일반 Android & iOS
+
+  # 이미지를 브랜딩 영역에 배치 (더 크게 표시됨)
+  # branding: assets/icons/teddy_bear_splash.png
+  # branding_mode: bottom  # 또는 center

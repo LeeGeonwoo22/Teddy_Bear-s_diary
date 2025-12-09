@@ -16,24 +16,19 @@ class _SplashPageState extends State<SplashPage> {
 
   final List<Onboard> list = [
     Onboard(
-      title: '안녕 반가워, 나는 곰돌이야',
-      subtitle: '만나서 반가워 ㅎㅎ',
-      image: 'assets/images/onBoarding_1.png',
+      title: "Hello i'm teddy",
+      subtitle: 'Would be my friend?',
+      image: 'assets/images/splash/3.png',
     ),
     Onboard(
       title: '소중한 너를 지키고 싶어',
-      subtitle: '너가 내 곁에서 잠들어 있는 동안, 너의 꿈속에 들어오려는 악몽 괴물로부터 너를 지켜주는 일을 하고있어. 얼굴에 반창고도 이때 생긴 흉터란다..',
-      image: 'assets/images/onBoarding_2.png',
-    ),
-    Onboard(
-      title: '이야기 해줄래?',
       subtitle: '나는 언제든지 너의 이야기를 들어줄 준비가 되어있어. 너가 나에게 사랑을 주는 순간 나는 평범한 곰인형이 아니게 되었어.. 항상 고마워. 너는 나에게 소중한 존재야.. ',
-      image: 'assets/images/onBoarding_3.png',
+      image: 'assets/images/splash/4.png',
     ),
     Onboard(
       title: '나랑 같이 이야기해요',
       subtitle: '함께 같이 일기를 써요!',
-      image: 'assets/images/onBoarding_4.png',
+      image: 'assets/images/splash/5.png',
     ),
   ];
 
@@ -68,10 +63,13 @@ class _SplashPageState extends State<SplashPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          item.image,
-                          height: size.height * 0.4,
-                          fit: BoxFit.contain,
+                        SizedBox(
+                          // height : size
+                          child: Image.asset(
+                            item.image,
+                            height: size.height * 0.4,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                         const SizedBox(height: 40),
                         Text(
