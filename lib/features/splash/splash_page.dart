@@ -18,19 +18,19 @@ class _SplashPageState extends State<SplashPage> {
 
   final List<Onboard> list = [
     Onboard(
-      title: "Hello i'm teddy",
+      title: "Hello I'm teddy",
       subtitle: 'Would be my friend?',
-      image: 'assets/images/splash/3.png',
+      image: 'assets/images/splash/1.png',
     ),
     Onboard(
-      title: '소중한 너를 지키고 싶어',
-      subtitle: '나는 언제든지 너의 이야기를 들어줄 준비가 되어있어. 너가 나에게 사랑을 주는 순간 나는 평범한 곰인형이 아니게 되었어.. 항상 고마워. 너는 나에게 소중한 존재야.. ',
-      image: 'assets/images/splash/4.png',
+      title: "I m your friend",
+      subtitle: 'Tell me everything.. i m ready to listen your voice.',
+      image: 'assets/images/splash/2.png',
     ),
     Onboard(
-      title: '나랑 같이 이야기해요',
+      title: "Let's write diary",
       subtitle: '함께 같이 일기를 써요!',
-      image: 'assets/images/splash/5.png',
+      image: 'assets/images/splash/3.png',
     ),
   ];
 

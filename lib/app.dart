@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'core/route/app_router.dart';
 
-class TeddyBear extends StatelessWidget {
+class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
