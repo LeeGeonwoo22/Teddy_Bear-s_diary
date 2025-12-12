@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-
-
-import '../../controller/chat_controller.dart';
-import 'package:get/get.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:teddyBear/features/chat/bloc/chat_bloc.dart';
+import 'package:teddyBear/features/chat/bloc/chat_event.dart';
+import 'package:teddyBear/features/chat/bloc/chat_state.dart';
 import '../../core/common/global.dart';
 import '../../core/widgets/messageCard.dart';
 
@@ -17,7 +16,9 @@ class ChatbotFeature extends StatefulWidget {
 }
 
 class _ChatbotFeatureState extends State<ChatbotFeature> {
-  final _c = ChatController();
+  final textC = TextEditingController();
+  final scrollC = ScrollController();
+  // final _c = ChatController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,7 +32,7 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
           children: [
             Expanded(
               child: TextFormField(
-                controller: _c.textC,
+                controller: textC,
                 textAlign: TextAlign.center,
                 onTapOutside: (e) => FocusScope.of(context).unfocus(),
                 decoration: InputDecoration(
@@ -50,7 +51,12 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
               radius: 24,
               child: IconButton(
                   onPressed: (){
-                    _c.askQuestion();
+                    final question = textC.text.trim();
+                    if(question.isNotEmpty) {
+                      context.read<ChatBloc>().add(AskQuestion(question));
+                      textC.clear();
+                    }
+                    // textC.askQuestion();
                   },
                   icon: Icon(
                       Icons.rocket_launch_rounded, size: 28,color: Colors.white
@@ -60,15 +66,18 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
         ),
       ),
       body:
-      Obx(
-            ()=> ListView(
-          physics: BouncingScrollPhysics(),
-          controller: _c.scrollC,
-          padding: EdgeInsets.only(top: mq.height * .02, bottom: mq.height * .1),
-          children:
-          _c.list.map((e)=> MessageCard(message: e)).toList()
-          ,
-        ),
+
+      BlocBuilder<ChatBloc, ChatState>(
+        builder: (context, state)
+          {
+            return ListView(
+              physics: BouncingScrollPhysics(),
+              controller: scrollC,
+              padding: EdgeInsets.only(top: mq.height * .02, bottom: mq.height * .1),
+              children:
+              state.messages.map((e)=> MessageCard(message: e)).toList()
+                );
+          }
       ),
 
     );
