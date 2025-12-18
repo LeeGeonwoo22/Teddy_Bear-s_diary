@@ -12,8 +12,8 @@ class HomeShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.toString();
 
     int currentIndex = 0;
-    if (location.startsWith('/mood')) currentIndex = 1;
-    else if (location.startsWith('/journal')) currentIndex = 2;
+    if (location.startsWith('/journal')) currentIndex = 1;
+    else if (location.startsWith('/memorial')) currentIndex = 2;
     else if (location.startsWith('/settings')) currentIndex = 3;
 
 
@@ -28,13 +28,13 @@ class HomeShell extends StatelessWidget {
           onTap: (index) {
             switch (index) {
               case 0:
-                context.go('/home');
+                context.go('/chat');
                 break;
               case 1:
-                context.go('/mood');
+                context.go('/journal');
                 break;
               case 2:
-                context.go('/journal');
+                context.go('/memorial');
                 break;
               case 3:
                 context.go('/settings');

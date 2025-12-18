@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../data/model/user_model.dart';
+import '../../../data/model/user.dart';
 
 enum AuthType { initial, guest, social, loading }
 

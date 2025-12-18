@@ -4,7 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teddyBear/features/auth/bloc/auth_bloc.dart';
 import 'package:teddyBear/features/auth/bloc/auth_state.dart';
-import '../../auth/google.dart';
+import 'bloc/auth_event.dart';
+import 'widgets/google.dart';
 import '../../core/widgets/custom_btn.dart';
 
 class LoginPage extends StatefulWidget {
@@ -114,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           CustomBtn(
                             onTap: () {
-                              GoogleSignInService.signInWithGoogle();
+                              context.read<AuthBloc>().add(LoginWithGoogle());
                             },
                             text: '구글 로그인',
                             icon: Icons.mail_outline, // 아이콘 추가
@@ -123,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                           CustomBtn(
                             onTap: () {
                               print('시작');
-                              context.go('/chat');
+                              context.read<AuthBloc>().add(LoginAsGuest());
                             },
                             text: '시작',
                             icon: Icons.phone_android_outlined, // 아이콘 추가

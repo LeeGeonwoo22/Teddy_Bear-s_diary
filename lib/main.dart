@@ -6,6 +6,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:teddyBear/features/auth/bloc/auth_bloc.dart';
 import 'package:teddyBear/features/auth/login.dart';
 import 'app.dart';
+import 'features/auth/bloc/auth_event.dart';
+import 'features/auth/repository/AuthRepository.dart';
 import 'features/chat/bloc/chat_bloc.dart';
 import 'features/chat/chat.dart';
 import 'firebase_options.dart';
@@ -19,13 +21,15 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  final AuthRepository _authRepository = FirebaseAuthRepository();
+
   runApp(
       MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_)=>AuthBloc(),
-        child: LoginPage(),),
-        BlocProvider(create: (_)=>ChatBloc(),
-        child: ChatbotFeature(),)
+        BlocProvider<AuthBloc>(create: (_)=>AuthBloc(_authRepository)..add(const AppStarted()),
+        ),
+        BlocProvider<ChatBloc>(create: (_)=>ChatBloc(),
+        )
 
       ],
       child: App()));
