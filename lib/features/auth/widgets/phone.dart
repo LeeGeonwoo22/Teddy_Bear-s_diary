@@ -23,7 +23,7 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
       verificationCompleted: (PhoneAuthCredential credential) async {
         await FirebaseAuth.instance.signInWithCredential(credential);
         _showMessage('자동 로그인 완료');
-        context.go('/home');
+        context.go('/navbar');
       },
       verificationFailed: (FirebaseAuthException e) {
         _showMessage('인증 실패: ${e.message}');

@@ -4,12 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:teddyBear/features/auth/bloc/auth_bloc.dart';
-import 'package:teddyBear/features/auth/login.dart';
 import 'app.dart';
 import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/repository/AuthRepository.dart';
 import 'features/chat/bloc/chat_bloc.dart';
-import 'features/chat/chat.dart';
 import 'firebase_options.dart';
 
 void main() async{

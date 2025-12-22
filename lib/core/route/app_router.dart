@@ -1,9 +1,9 @@
 
 import 'package:go_router/go_router.dart';
 import '../../features/chat/chat.dart';
-import '../../features/home/home_shell.dart';
 import '../../features/auth/login.dart';
 import '../../features/splash/splash_page.dart';
+import 'navbar/home_shell.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -17,10 +17,6 @@ class AppRouter {
           path: '/login',
           builder: (context, state) => LoginPage(),
         ),
-        GoRoute(
-          path: '/settings',
-          builder: (context, state) => ChatbotFeature(),
-        ),
         ShellRoute(builder:
         (context, state, child) {
           return HomeShell(child : child);
@@ -30,7 +26,7 @@ class AppRouter {
             builder: (context, state) => ChatbotFeature(),
           ),
           // GoRoute(
-          //   path: '/home',
+          //   path: '/journal',
           //   builder: (context, state) => HomePage(),
           // ),
           // GoRoute(
@@ -38,11 +34,7 @@ class AppRouter {
           //   builder: (context, state) => HomePage(),
           // ),
           // GoRoute(
-          //   path: '/journal',
-          //   builder: (context, state) => HomePage(),
-          // ),
-          // GoRoute(
-          //   path: '/mood',
+          //   path: '/settings',
           //   builder: (context, state) => HomePage(),
           // ),
         ]
