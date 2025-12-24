@@ -3,10 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:teddyBear/features/chat/bloc/chat_bloc.dart';
 import 'package:teddyBear/features/chat/bloc/chat_event.dart';
 import 'package:teddyBear/features/chat/bloc/chat_state.dart';
-import 'package:teddyBear/features/chat/widgets/DateHeaders.dart';
 import '../../core/common/global.dart';
-import '../../core/widgets/messageCard.dart';
-import '../../data/model/message.dart';
+import 'widgets/chat_helpers.dart';
 
 class ChatbotFeature extends StatefulWidget {
   const ChatbotFeature({super.key});
@@ -19,10 +17,7 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
   final textC = TextEditingController();
   final scrollC = ScrollController();
   final searchC = TextEditingController();
-
   bool isSearching = false;
-  String searchQuery = '';
-
   @override
   void dispose() {
     textC.dispose();
@@ -45,9 +40,11 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
             border: InputBorder.none
           ),
           onChanged: (value) {
-            setState(() {
-              searchQuery = value.toLowerCase();
-            });
+            // setState(() {
+            //   searchQuery = value.toLowerCase();
+            // });
+            // ✅ BLoC으로 검색어 전달
+            context.read<ChatBloc>().add(SearchMessages(value));
           },
         ) :
         const Text('Chat with Teddy'),
@@ -56,7 +53,8 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
             setState(() {
               isSearching = !isSearching ;
               if(!isSearching) {
-                searchQuery = '';
+                // ✅ BLoC에서 검색 초기화
+                context.read<ChatBloc>().add(const ClearSearch());
                 searchC.clear();
               }
             });
@@ -106,74 +104,29 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
       body: BlocBuilder<ChatBloc, ChatState>(
         builder: (context, state)
           {
-            final messages = searchQuery.isEmpty ? state.messages : state.messages.where((msg)=> msg.msg.toLowerCase().contains(searchQuery)).toList();
-            final messageWidgets = _buildMessagesWithDateHeaders(messages);
+            // ✅ BLoC에서 필터링된 메시지 사용
+            final messages = state.filteredMessages;
+            // final messages = searchQuery.isEmpty
+            //     ? state.messages
+            //     : state.messages.where((msg)=>
+            //     msg.msg.toLowerCase().contains(searchQuery)).toList();
+
+            final messageWidgets = ChatHelpers.buildMessagesWithDateHeaders(
+              messages: messages,
+              searchQuery: state.searchQuery,
+            );
 
             return ListView(
               physics: BouncingScrollPhysics(),
               controller: scrollC,
               padding: EdgeInsets.only(top: mq.height * .02, bottom: mq.height * .1),
               children:
-              state.messages.map((e)=> MessageCard(message: e)).toList()
+              messageWidgets,
+
                 );
           }
       ),
 
     );
-
-  }
-  List<Widget> _buildMessagesWithDateHeaders(List<Message> messages) {
-    final widgets = <Widget>[];
-    String? lastDate;
-
-    for (int i = 0; i < messages.length; i++) {
-      final message = messages[i];
-      final messageDate = _formatDate(message.timestamp);
-
-      // 날짜가 바뀌면 DateHeaders 추가
-      if (lastDate != messageDate) {
-        widgets.add(DateHeaders(dateText: messageDate));  // ✅ 여기서 사용!
-        lastDate = messageDate;
-      }
-
-      // 메시지 추가 (검색어 하이라이트)
-      widgets.add(_buildMessageWithHighlight(message));
-    }
-
-    return widgets;
-  }
-
-  Widget _buildMessageWithHighlight(Message message) {
-    if (searchQuery.isEmpty) {
-      return MessageCard(message: message);
-    }
-
-    return Container(
-      decoration: message.msg.toLowerCase().contains(searchQuery)
-          ? BoxDecoration(
-        color: Colors.yellow.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(8),
-      )
-          : null,
-      child: MessageCard(message: message),
-    );
-  }
-
-  // 날짜 포맷
-  String _formatDate(DateTime dateTime) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(Duration(days: 1));
-    final messageDay = DateTime(dateTime.year, dateTime.month, dateTime.day);
-
-    if (messageDay == today) {
-      return '오늘';
-    } else if (messageDay == yesterday) {
-      return '어제';
-    } else if (now.year == dateTime.year) {
-      return '${dateTime.month}월 ${dateTime.day}일';
-    } else {
-      return '${dateTime.year}년 ${dateTime.month}월 ${dateTime.day}일';
-    }
   }
 }
