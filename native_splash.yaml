@@ -3,13 +3,13 @@ flutter_native_splash:
   ios: true
   web: false
   color: "#F5E2B8"
-  image: "assets/images/native_splash/onBoarding_1.png"
-  branding: "assets/images/native_splash/Teddy bear's diary_branding.png"
+  image: "assets/images/native_splash/Teddy bear's diary.png"
+  branding: "assets/images/native_splash/2.png"
   # Android 12 이상 (Material You)
 
   android_12:
-    image : "assets/images/native_splash/onBoarding_1.png"
-    branding : "assets/images/native_splash/Teddy bear's diary_branding.png"
+    image : "assets/images/native_splash/Teddy bear's diary.png"
+    branding : "assets/images/native_splash/1.png"
     color: "#F5E2B8"
 
   # 일반 Android & iOS

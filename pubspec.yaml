@@ -11,23 +11,32 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # ✅ Flutter 공식 다국어(Localizations) — 반드시 포함
+  flutter_localizations:
+    sdk: flutter
+
+  # ✅ 문자열/날짜 포맷, 로컬라이제이션용
+  intl: ^0.20.2
+
   # Routing
   go_router: ^17.0.0
 
   # HTTP
   http: ^1.5.0
 
-  # dotenv
+  # dotenv (환경 변수)
   flutter_dotenv: ^6.0.0
-  # access location
+
+  # File/Storage Access
   path_provider: ^2.1.5
-  # bloc & dependency injection
+
+  # Bloc & Dependency Injection
   flutter_bloc: ^9.1.1
   get_it: ^9.0.5
 
-  # hive
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  # Hive (로컬 데이터베이스)
+  hive_ce: ^2.16.0
+  hive_ce_flutter: ^2.3.3
 
   # UI / Animations / Icons
   animated_text_kit: ^4.3.0
@@ -45,9 +54,8 @@ dependencies:
   uuid: ^4.5.2
   analyzer: ^9.0.0
 
-  # google login
+  # Google Login
   google_sign_in: ^7.2.0
-#  get: ^4.7.3
 
 dev_dependencies:
   flutter_test:
@@ -57,8 +65,9 @@ dev_dependencies:
 
   # JSON serialization
   json_serializable: ^6.11.1
-  build_runner: ^2.10.1
-
+  # hive
+  build_runner: ^2.10.4
+  hive_ce_generator: ^1.11.0
   # Build-time tools (DEV ONLY)
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.6
@@ -76,7 +85,9 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/images/native_splash/
     - assets/images/splash/
     - assets/.env
     - assets/prompts/
     - assets/prompts/quotes/
+    - assets/prompts/reading/

@@ -1,94 +1,199 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uuid/uuid.dart';
-import '../../../data/model/user_model.dart';
+import '../../../data/model/user.dart' as app_user;
+import '../repository/AuthRepository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  AuthBloc() : super(AuthState.initial()) {
+  final AuthRepository _authRepository;
+
+  AuthBloc(this._authRepository) : super(AuthState.initial()) {
     on<AppStarted>(_onAppStarted);
-    on<LoginWithSocial>(_onLoginWithSocial);
+    on<LoginWithGoogle>(_onLoginWithGoogle);
+    on<LoginAsGuest>(_onLoginAsGuest);
     on<ResetGuest>(_onResetGuest);
+    on<LogoutRequested>(_onLogoutRequested);
+  }
+  void onTransition(Transition<AuthEvent, AuthState> transition) {
+    super.onTransition(transition);
+    print('🌀 [AuthBloc Transition]');
+    print('  Event : ${transition.event}');
+    print('  From  : ${transition.currentState.type}');
+    print('  To    : ${transition.nextState.type}');
+    print('-----------------------------');
   }
 
-  /// 앱이 처음 실행될 때
+  /// 앱이 처음 실행될 때 - 기존 로그인 상태 확인
   Future<void> _onAppStarted(
       AppStarted event,
       Emitter<AuthState> emit,
       ) async {
     emit(AuthState.loading());
 
-    // 매번 새로운 UUID 생성
-    final uuid = const Uuid().v4();
-    final guest = User.guest(uuid);
+    try {
+      final currentUser = _authRepository.getCurrentUser();
 
-    // TODO: SharedPreferences에서 기존 UUID 확인
-    // final savedUuid = await _storage.getUuid();
-    // if (savedUuid != null) {
-    //   final guest = User.guest(savedUuid);
-    //   emit(AuthState.guest(savedUuid, guest));
-    //   return;
-    // }
+      if (currentUser == null) {
+        // 로그인 상태 아님 - 로그인 페이지로
+        emit(AuthState.initial());
+        return;
+      }
 
-    // TODO: 새 UUID를 저장
-    // await _storage.saveUuid(uuid);
+      // Firestore에서 사용자 데이터 가져오기
+      final userData = await _authRepository.getUserData(currentUser.uid);
 
-    emit(AuthState.guest(uuid, guest));
+      if (userData == null) {
+        // 데이터 없음 - 로그아웃 처리
+        await _authRepository.signOut();
+        emit(AuthState.initial());
+        return;
+      }
+
+      final user = app_user.User.fromJson(userData);
+
+      if (user.isGuest) {
+        emit(AuthState.guest(user.uuid, user));
+      } else {
+        emit(AuthState.social(uuid: user.uuid, user: user));
+      }
+    } catch (e) {
+      print('AppStarted error: $e');
+      emit(AuthState.initial());
+    }
   }
 
-  /// 소셜 로그인 시
-  Future<void> _onLoginWithSocial(
-      LoginWithSocial event,
+  /// 비회원 로그인
+  Future<void> _onLoginAsGuest(
+      LoginAsGuest event,
       Emitter<AuthState> emit,
       ) async {
     emit(AuthState.loading());
 
     try {
-      final guestUuid = state.uuid ?? const Uuid().v4();
+      final userCredential = await _authRepository.guestLogin();
 
-      final socialUser = User.social(
-        uuid: guestUuid,
-        name: event.name,
-        email: event.email,
-        provider: event.provider,
-      );
+      if (userCredential?.user == null) {
+        throw Exception('비회원 로그인 실패');
+      }
 
-      // TODO: 서버에 UUID와 소셜 계정 연결
-      // await _authRepository.linkSocialAccount(
-      //   uuid: guestUuid,
-      //   socialId: event.email,
-      //   provider: event.provider,
-      // );
+      final firebaseUid = userCredential!.user!.uid;
+      final guestUser = app_user.User.guest(uuid: firebaseUid);
 
-      emit(AuthState.social(uuid: guestUuid, user: socialUser));
+      emit(AuthState.guest(firebaseUid, guestUser));
     } catch (e) {
       emit(state.copyWith(
-        type: AuthType.guest,
+        type: AuthType.initial,
+        error: '비회원 로그인 실패: $e',
+      ));
+    }
+  }
+
+  /// 소셜 로그인 구글
+  Future<void> _onLoginWithGoogle(
+      LoginWithGoogle event,
+      Emitter<AuthState> emit,
+      ) async {
+    emit(AuthState.loading());
+
+    try {
+      // 현재 비회원 UUID 저장 (있다면)
+      final previousGuestUid = state.isGuest ? state.uuid : null;
+
+      // 소셜 로그인 실행
+      final userCredential = await _authRepository.signInWithGoogle();
+
+      if (userCredential?.user == null) {
+        throw Exception('소셜 로그인 실패');
+      }
+
+      final firebaseUser = userCredential!.user!;
+      final firebaseUid = firebaseUser.uid;
+
+      // Firestore에서 기존 데이터 확인
+      final existingData = await _authRepository.getUserData(firebaseUid);
+
+      app_user.User socialUser;
+
+      if (existingData != null) {
+        // 이미 가입된 소셜 계정
+        socialUser = app_user.User.fromJson(existingData);
+      } else {
+        // 신규 소셜 계정
+        socialUser = app_user.User.social(
+          uuid: firebaseUid,
+          name: firebaseUser.displayName ?? '',
+          email: firebaseUser.email ?? '',
+          provider: 'google',
+        );
+
+        // Firestore에 저장
+        await _authRepository.updateUserData(firebaseUid, socialUser.toJson());
+      }
+
+      // 비회원에서 전환된 경우 데이터 마이그레이션
+      if (previousGuestUid != null && previousGuestUid != firebaseUid) {
+        await _authRepository.migrateGuestData(
+          guestUid: previousGuestUid,
+          socialUid: firebaseUid,
+        );
+      }
+
+      emit(AuthState.social(uuid: firebaseUid, user: socialUser));
+    } catch (e) {
+      print('LoginWithSocial error: $e');
+      emit(state.copyWith(
+        type: state.type == AuthType.guest ? AuthType.guest : AuthType.initial,
         error: '로그인 실패: $e',
       ));
     }
   }
 
-  /// 비회원 데이터 리셋 (새로운 UUID 생성)
+  // 로그아웃
+  Future<void> _onLogoutRequested(
+      LogoutRequested event,
+      Emitter<AuthState> emit,
+      ) async {
+    emit(AuthState.loading());
+
+    try {
+      await _authRepository.signOut();
+      emit(AuthState.initial());
+    } catch (e) {
+      print('Logout error: $e');
+      emit(state.copyWith(
+        error: '로그아웃 실패: $e',
+      ));
+    }
+  }
+
+  /// 비회원 데이터 리셋
   Future<void> _onResetGuest(
       ResetGuest event,
       Emitter<AuthState> emit,
       ) async {
-    if (!state.isGuest) return; // 게스트일 때만 리셋 가능
+    if (!state.isGuest) return;
 
     emit(AuthState.loading());
 
-    // TODO: 로컬 데이터 삭제
-    // await _storage.clearChatHistory();
-    // await _storage.clearUuid();
+    try {
+      // 현재 비회원 계정 로그아웃
+      await _authRepository.signOut();
 
-    // 새로운 UUID로 재시작
-    final newUuid = const Uuid().v4();
-    final newGuest = User.guest(newUuid);
+      // 새 비회원 계정으로 로그인
+      final userCredential = await _authRepository.guestLogin();
 
-    // TODO: 새 UUID 저장
-    // await _storage.saveUuid(newUuid);
+      if (userCredential?.user == null) {
+        throw Exception('비회원 재생성 실패');
+      }
 
-    emit(AuthState.guest(newUuid, newGuest));
+      final firebaseUid = userCredential!.user!.uid;
+      final newGuest = app_user.User.guest(uuid: firebaseUid);
+
+      emit(AuthState.guest(firebaseUid, newGuest));
+    } catch (e) {
+      emit(state.copyWith(
+        error: '리셋 실패: $e',
+      ));
+    }
   }
 }

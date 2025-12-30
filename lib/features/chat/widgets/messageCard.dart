@@ -1,7 +1,7 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
-import '../../data/model/message.dart';
-import '../common/global.dart';
+import '../../../data/model/message.dart';
+import '../../../core/common/global.dart';
 
 
 class MessageCard extends StatelessWidget {
