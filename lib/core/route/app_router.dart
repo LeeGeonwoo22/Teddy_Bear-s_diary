@@ -1,7 +1,7 @@
 
 import 'package:go_router/go_router.dart';
-import '../../features/chat/chat.dart';
-import '../../features/auth/login.dart';
+import '../../features/chat/chatbotFeature.dart';
+import '../../features/auth/loginPage.dart';
 import '../../features/splash/splash_page.dart';
 import 'navbar/home_shell.dart';
 

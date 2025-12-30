@@ -14,6 +14,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ResetGuest>(_onResetGuest);
     on<LogoutRequested>(_onLogoutRequested);
   }
+  void onTransition(Transition<AuthEvent, AuthState> transition) {
+    super.onTransition(transition);
+    print('🌀 [AuthBloc Transition]');
+    print('  Event : ${transition.event}');
+    print('  From  : ${transition.currentState.type}');
+    print('  To    : ${transition.nextState.type}');
+    print('-----------------------------');
+  }
 
   /// 앱이 처음 실행될 때 - 기존 로그인 상태 확인
   Future<void> _onAppStarted(

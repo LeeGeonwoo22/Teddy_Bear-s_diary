@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:teddyBear/features/chat/bloc/chat_bloc.dart';
@@ -18,8 +20,43 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
   final scrollC = ScrollController();
   final searchC = TextEditingController();
   bool isSearching = false;
+  StreamSubscription? _subscription;
+
+  void initState() {
+    super.initState();
+
+    // BLoC 상태 변화 감지
+    _subscription = context.read<ChatBloc>().stream.listen((state) {
+      if (state.messages.isNotEmpty && scrollC.hasClients) {
+        // 새 메시지 추가 시 하단으로 스크롤
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          scrollC.animateTo(
+            scrollC.position.maxScrollExtent,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      }
+      // 검색결과 있을 경우 첫 결과로 스크롤 이동
+      if (state.searchQuery.isNotEmpty && state.filteredMessages.isNotEmpty) {
+        final firstResultIndex = state.messages.indexOf(
+            state.filteredMessages.first);
+        if (firstResultIndex >= 0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            scrollC.animateTo(
+              firstResultIndex * 80.0, // 메시지 하나당 평균 높이 추정값
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOut,
+            );
+          });
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _subscription?.cancel();
     textC.dispose();
     scrollC.dispose();
     searchC.dispose();
@@ -40,9 +77,6 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
             border: InputBorder.none
           ),
           onChanged: (value) {
-            // setState(() {
-            //   searchQuery = value.toLowerCase();
-            // });
             // ✅ BLoC으로 검색어 전달
             context.read<ChatBloc>().add(SearchMessages(value));
           },
@@ -106,11 +140,6 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
           {
             // ✅ BLoC에서 필터링된 메시지 사용
             final messages = state.filteredMessages;
-            // final messages = searchQuery.isEmpty
-            //     ? state.messages
-            //     : state.messages.where((msg)=>
-            //     msg.msg.toLowerCase().contains(searchQuery)).toList();
-
             final messageWidgets = ChatHelpers.buildMessagesWithDateHeaders(
               messages: messages,
               searchQuery: state.searchQuery,
@@ -122,7 +151,6 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
               padding: EdgeInsets.only(top: mq.height * .02, bottom: mq.height * .1),
               children:
               messageWidgets,
-
                 );
           }
       ),

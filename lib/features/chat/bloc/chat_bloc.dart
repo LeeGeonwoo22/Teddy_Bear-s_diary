@@ -1,15 +1,26 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:teddyBear/core/common/appString.dart';
 import 'package:teddyBear/features/chat/bloc/chat_event.dart';
 import 'package:teddyBear/features/chat/bloc/chat_state.dart';
-
-import '../../../core/api/apis.dart';
 import '../../../data/model/message.dart';
+import '../repository/chatRepository.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  ChatBloc() : super(ChatState.initial()) {
+  final ChatRepository _chatRepository;
+  ChatBloc(this._chatRepository) : super(ChatState.initial()) {
+    // 상태 방출
     on<AskQuestion>(_onAskQuestion);
     on<SearchMessages>(_onSearchMessages);
     on<ClearSearch>(_onClearSearch);
+  }
+
+  void onTransition(Transition<ChatEvent, ChatState> transition) {
+    super.onTransition(transition);
+    print('🌀 [Chat Transition]');
+    print('  Chat Event : ${transition.event}');
+    print('  Chat From  : ${transition.currentState}');
+    print('  Chat To    : ${transition.nextState}');
+    print('-----------------------------');
   }
 
   Future<void> _onAskQuestion(
@@ -35,11 +46,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ));
 
     try {
-      // 3. API 호출
-      final res = await APIs.getAnswer(event.question);
+      // 3. repository 호출
+      final res = await _chatRepository.sendMessage(userMessage.msg);
 
-      // 4. 로딩 메시지를 실제 응답으로 교체
-      final botMessage = Message(msg: res, msgType: MessageType.bot);
+
+      // 4. 응답 메세지
+      final botMessage = res;
       final finalMessages = [...messagesWithUser, botMessage];
 
       emit(state.copyWith(
@@ -47,12 +59,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         isLoading: false,
       ));
 
-      print('✅ 응답 완료: ${res.length}자');
+      print('✅ 응답 완료: ${res.msg.length}자');
+
+
     } catch (e) {
       // 5. 에러 처리
       print('❌ API 오류: $e');
       final errorMessage = Message(
-        msg: 'Sorry, something went wrong. Please try again.',
+        msg: AppStrings.tr('error_api'),
         msgType: MessageType.bot,
       );
       final errorMessages = [...messagesWithUser, errorMessage];
