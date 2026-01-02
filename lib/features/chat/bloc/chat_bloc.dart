@@ -12,6 +12,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<AskQuestion>(_onAskQuestion);
     on<SearchMessages>(_onSearchMessages);
     on<ClearSearch>(_onClearSearch);
+    on<LoadMessages>(_onLoadMessages);
+    on<DeleteAllMessages>(_onDeleteAllMessages);
   }
 
   void onTransition(Transition<ChatEvent, ChatState> transition) {
@@ -21,6 +23,49 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     print('  Chat From  : ${transition.currentState}');
     print('  Chat To    : ${transition.nextState}');
     print('-----------------------------');
+  }
+
+
+  // ✅ 메시지 불러오기 (추가)
+  Future<void> _onLoadMessages(
+      LoadMessages event,
+      Emitter<ChatState> emit,
+      ) async {
+    print('📥 메시지 불러오기 시작...');
+    emit(state.copyWith(isLoading: true));
+
+    try {
+      final messages = await _chatRepository.loadMessages();
+
+      if (messages.isEmpty) {
+        messages.add(
+          Message(
+            msg: AppStrings.tr('chat_greeting'),
+            msgType: MessageType.bot,
+          ),
+        );
+      }
+
+      emit(state.copyWith(
+        messages: messages,
+        isLoading: false,
+      ));
+
+      print('✅ 메시지 불러오기 완료: ${messages.length}개');
+
+    } catch (e) {
+      print('❌ 메시지 불러오기 실패: $e');
+
+      emit(state.copyWith(
+        messages: [
+          Message(
+            msg: AppStrings.tr('error_api'),
+            msgType: MessageType.bot,
+          )
+        ],
+        isLoading: false,
+      ));
+    }
   }
 
   Future<void> _onAskQuestion(
@@ -47,8 +92,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     try {
       // 3. repository 호출
-      final res = await _chatRepository.sendMessage(userMessage.msg);
-
+      final res = await _chatRepository.sendMessage(event.question);
 
       // 4. 응답 메세지
       final botMessage = res;
@@ -90,5 +134,38 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       Emitter<ChatState> emit,
       ) {
     emit(state.copyWith(searchQuery: ''));
+  }
+
+  Future<void> _onDeleteAllMessages(
+      DeleteAllMessages event,
+      Emitter<ChatState> emit,
+      ) async {
+    print('🗑️ 모든 메시지 삭제 시작...');
+
+    try {
+      await _chatRepository.deleteAllMessages();
+
+      emit(state.copyWith(messages: [
+        Message(
+          msg: 'Hello! How can I help you?',
+          msgType: MessageType.bot,
+        )
+      ]));
+
+      print('✅ 모든 메시지 삭제 완료');
+
+    } catch (e) {
+      print('❌ 삭제 실패: $e');
+
+      emit(state.copyWith(
+        messages: [
+          ...state.messages,
+          Message(
+            msg: 'Failed to delete messages.',
+            msgType: MessageType.bot,
+          )
+        ],
+      ));
+    }
   }
 }

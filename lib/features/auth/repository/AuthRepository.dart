@@ -155,6 +155,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   User? getCurrentUser() {
+    print(_auth.currentUser?.uid);
     return _auth.currentUser;
   }
 

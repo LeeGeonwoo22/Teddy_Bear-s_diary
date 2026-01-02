@@ -12,6 +12,7 @@ class ChatRemoteDataSource {
   final http.Client _client;
   ChatRemoteDataSource(this._client);
 
+  // 문장 대답
   Future<String> fetchAnswer(String question) async {
     try {
       // 1️⃣ 곰돌이 프롬프트 파일 목록 읽기

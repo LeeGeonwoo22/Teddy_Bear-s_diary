@@ -6,6 +6,14 @@ abstract class ChatEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class LoadMessages extends ChatEvent {  // ✅ 추가
+  const LoadMessages();
+}
+
+class DeleteAllMessages extends ChatEvent {  // ✅ 추가
+  const DeleteAllMessages();
+}
+
 class AskQuestion extends ChatEvent {
   final String question;
   const AskQuestion(this.question);
