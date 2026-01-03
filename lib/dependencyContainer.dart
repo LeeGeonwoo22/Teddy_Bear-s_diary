@@ -9,6 +9,8 @@ import 'package:teddyBear/features/chat/repository/chatRemoteDataSource.dart';
 import 'package:teddyBear/features/chat/repository/chatLocalDataSource.dart';
 import 'package:teddyBear/features/chat/repository/chatRepository.dart';
 
+import 'data/model/message.dart';
+
 class DependencyContainer {
   static final injector = GetIt.instance;
 
@@ -19,6 +21,8 @@ class DependencyContainer {
     await Hive.initFlutter();
     print('🔧 hive 초기화 완료...');
 
+    Hive.registerAdapter(MessageTypeAdapter());
+    Hive.registerAdapter(MessageAdapter());
     // ✅ http client
     injector.registerLazySingleton<http.Client>(
           () => http.Client(),
@@ -52,11 +56,6 @@ class DependencyContainer {
         remote: injector<ChatRemoteDataSource>(),
         local: injector<ChatLocalDataSource>(), authRepository:injector<AuthRepository>(),
       ),
-    );
-
-    // ✅ auth repository
-    injector.registerLazySingleton<AuthRepository>(
-          () => FirebaseAuthRepository(),
     );
   }
 }
