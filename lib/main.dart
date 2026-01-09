@@ -9,6 +9,7 @@ import 'package:teddyBear/features/chat/bloc/chat_event.dart';
 import 'package:teddyBear/features/chat/repository/chatRepository.dart';
 import 'package:teddyBear/dependencyContainer.dart';
 import 'app.dart';
+import 'core/common/encryption_service.dart';
 import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/repository/AuthRepository.dart';
 import 'features/chat/bloc/chat_bloc.dart';
@@ -30,6 +31,17 @@ void main() async{
   );
   // 초기화 완료
   await DependencyContainer.setupLocator();
+  // 암호화 테스트
+  final encryption = EncryptionService();
+  await encryption.init();
+  print('✅ 암호화 초기화 완료');
+
+  // 암호화 테스트
+  final encrypted = encryption.encrypt('테스트 메시지');
+  print('🔒 암호화 결과: $encrypted');
+
+  final decrypted = encryption.decrypt(encrypted);
+  print('🔓 복호화 결과: $decrypted');
   runApp(
       MultiBlocProvider(
       providers: [

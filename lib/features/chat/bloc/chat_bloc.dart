@@ -16,6 +16,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<DeleteAllMessages>(_onDeleteAllMessages);
   }
 
+  @override
   void onTransition(Transition<ChatEvent, ChatState> transition) {
     super.onTransition(transition);
     print('🌀 [Chat Transition]');
@@ -37,14 +38,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     try {
       final messages = await _chatRepository.loadMessages();
 
-      if (messages.isEmpty) {
-        messages.add(
-          Message(
-            msg: AppStrings.tr('chat_greeting'),
-            msgType: MessageType.bot,
-          ),
-        );
-      }
+      // if (messages.isEmpty) {
+      //   // 리스트 형태 객체로 가져와야함.
+      //   messages.add(
+      //     Message(
+      //       msg: AppStrings.tr('chat_greeting'),
+      //       msgType: MessageType.bot,
+      //     )
+      //   );
+      // }
 
       emit(state.copyWith(
         messages: messages,

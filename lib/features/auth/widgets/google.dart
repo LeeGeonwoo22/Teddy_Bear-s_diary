@@ -67,17 +67,17 @@ class GoogleSignInService {
     }
   }
   // Sign out
-  static Future<void> signOut() async {
-    try {
-      await _googleSignIn.signOut();
-      await _auth.signOut();
-    } catch (e) {
-      print('Error signing out: $e');
-      throw e;
-    }
-  }
-  // Get current user
-  static User? getCurrentUser() {
-    return _auth.currentUser;
-  }
+  // static Future<void> signOut() async {
+  //   try {
+  //     await _googleSignIn.signOut();
+  //     await _auth.signOut();
+  //   } catch (e) {
+  //     print('Error signing out: $e');
+  //     throw e;
+  //   }
+  // }
+  // // Get current user
+  // static User? getCurrentUser() {
+  //   return _auth.currentUser;
+  // }
 }
