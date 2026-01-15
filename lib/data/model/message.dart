@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hive_ce/hive.dart'; // hive_ce 사용하는 경우
 import 'package:uuid/uuid.dart';
@@ -52,7 +53,7 @@ class Message extends Equatable {
     'id': id,
     'msg': msg,
     'msgType': msgType.name,
-    'timestamp': timestamp.toIso8601String(),
+    'timestamp': Timestamp.fromDate(timestamp),
   };
 
   factory Message.fromJson(Map<String, dynamic> json) => Message(

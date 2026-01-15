@@ -2,7 +2,10 @@
 import 'package:go_router/go_router.dart';
 import '../../features/chat/chatbotFeature.dart';
 import '../../features/auth/loginPage.dart';
+import '../../features/diary/diary.dart';
+import '../../features/settings/setting.dart';
 import '../../features/splash/splash_page.dart';
+import '../../features/to/toTeddy.dart';
 import 'navbar/home_shell.dart';
 
 class AppRouter {
@@ -25,18 +28,18 @@ class AppRouter {
             path: '/chat',
             builder: (context, state) => ChatbotFeature(),
           ),
-          // GoRoute(
-          //   path: '/journal',
-          //   builder: (context, state) => HomePage(),
-          // ),
-          // GoRoute(
-          //   path: '/album',
-          //   builder: (context, state) => HomePage(),
-          // ),
-          // GoRoute(
-          //   path: '/settings',
-          //   builder: (context, state) => HomePage(),
-          // ),
+          GoRoute(
+            path: '/diary',
+            builder: (context, state) => DiaryPage(diary: {}, onClose: () {  },),
+          ),
+          GoRoute(
+            path: '/toTeddy',
+            builder: (context, state) => Toteddy(),
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => SettingPage(),
+          ),
         ]
         )
       ]);

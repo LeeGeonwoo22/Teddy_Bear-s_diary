@@ -1,3 +1,4 @@
+// import 'package:clouddb/clouddb.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -15,7 +16,7 @@ abstract class AuthRepository {
 
 class FirebaseAuthRepository implements AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore db = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   bool isInitialize = false;
 
@@ -64,7 +65,7 @@ class FirebaseAuthRepository implements AuthRepository {
       final User? user = userCredential.user;
 
       if (user != null) {
-        final userDoc = _firestore.collection('users').doc(user.uid);
+        final userDoc = db.collection('users').doc(user.uid);
         final docSnapshot = await userDoc.get();
 
         if (!docSnapshot.exists) {
@@ -127,7 +128,7 @@ class FirebaseAuthRepository implements AuthRepository {
       final user = userCredential.user;
 
       if (user != null) {
-        await _firestore.collection('users').doc(user.uid).set({
+        await db.collection('users').doc(user.uid).set({
           'uuid': user.uid,
           'createdAt': FieldValue.serverTimestamp(),
           'isGuest': true,
@@ -155,13 +156,14 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   User? getCurrentUser() {
+    print(_auth.currentUser?.uid);
     return _auth.currentUser;
   }
 
   @override
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
-      final doc = await _firestore.collection('users').doc(uid).get();
+      final doc = await db.collection('users').doc(uid).get();
       return doc.data();
     } catch (e) {
       print('getUserData error: $e');
@@ -172,7 +174,7 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
     try {
-      await _firestore.collection('users').doc(uid).set(
+      await db.collection('users').doc(uid).set(
         data,
         SetOptions(merge: true),
       );
@@ -189,17 +191,17 @@ class FirebaseAuthRepository implements AuthRepository {
   }) async {
     try {
       // 비회원 채팅 데이터 마이그레이션 예시
-      final guestChatsQuery = await _firestore
+      final guestChatsQuery = await db
           .collection('chats')
           .where('userId', isEqualTo: guestUid)
           .get();
 
       // Batch로 일괄 처리
-      final batch = _firestore.batch();
+      final batch = db.batch();
 
       for (var doc in guestChatsQuery.docs) {
         // 새 문서 생성 (소셜 계정으로)
-        final newDocRef = _firestore.collection('chats').doc();
+        final newDocRef = db.collection('chats').doc();
         batch.set(newDocRef, {
           ...doc.data(),
           'userId': socialUid,

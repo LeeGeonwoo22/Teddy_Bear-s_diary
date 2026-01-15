@@ -23,7 +23,21 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: "Teddy Bear's diary",
       theme: ThemeData(
-        scaffoldBackgroundColor: backgroundColor, // 전체 배경색 지정
+        appBarTheme: AppBarTheme(
+          backgroundColor: backgroundColor,
+          foregroundColor: Colors.white,  // 👈 모든 AppBar의 텍스트/아이콘 색상
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          iconTheme: IconThemeData(
+            color: Colors.white,
+          ),
+        ),
+        scaffoldBackgroundColor: backgroundColor,
         colorScheme: ColorScheme.fromSeed(seedColor: backgroundColor),
         useMaterial3: true,
       ),

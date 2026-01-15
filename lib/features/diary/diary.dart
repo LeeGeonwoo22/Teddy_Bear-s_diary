@@ -1,0 +1,390 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:teddyBear/features/diary/widgets/diaryCalendar.dart';
+
+import '../../data/model/diary.dart';
+
+
+class DiaryPage extends StatefulWidget {
+  final Map<String, dynamic> diary;
+  final VoidCallback onClose;
+
+  const DiaryPage({
+        super.key,
+        required this.diary,
+        required this.onClose,
+  });
+
+  @override
+  State<DiaryPage> createState() => _DiaryPageState();
+
+}
+
+class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMixin {
+  @override
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  int _currentDialogueIndex = 0;
+  String _displayedText = '';
+  bool _isTyping = false;
+  Timer? _typingTimer;
+  int _charIndex = 0;
+  List<String> _dialogues = [];
+
+// 더미 데이터 리스트
+  final Map<DateTime, Diary> dummyDiaries = {
+    // 오늘 날짜 데이터
+    DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day): Diary(
+      date: DateTime.now(),
+      title: "오늘의 Flutter 공부",
+      content: "오늘은 RPG 스타일의 일기 대화창을 만들었다.\n\n타이핑 효과가 들어가니 훨씬 생동감이 넘친다.\n\n내일은 애니메이션을 더 다듬어봐야지!",
+      emotion: "🧸",
+    ),
+
+    // 어제 날짜 데이터
+    DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day - 1): Diary(
+      date: DateTime.now().subtract(const Duration(days: 1)),
+      title: "맛있는 점심",
+      content: "친구랑 같이 파스타를 먹으러 갔다.\n\n정말 맛있었고 즐거운 대화를 나눴다.\n\n행복한 하루였다.",
+      emotion: "🍝",
+    ),
+  };
+
+  void initState(){
+    // animation 컨트롤러
+    _controller = AnimationController(duration : const Duration(milliseconds: 500), vsync: this,);
+    _fadeAnimation = Tween<double>(begin: 0.0, end : 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    _slideAnimation = Tween<Offset>(begin: Offset(0, 0.5), end: Offset.zero).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    // 대사 분할
+    // _splitDialogues();
+
+    // 애니메이션 시작
+    _controller.forward();
+
+    // 첫 대사 타이핑 시작
+    // _startTyping();
+  }
+
+  void dispose() {
+    _typingTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // 1. 날짜 정규화 함수 (시/분/초를 0으로 맞춤)
+  DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  void _handleDaySelected(DateTime selectedDay) {
+    // 클릭한 날짜와 더미 데이터의 키 값을 동일하게 정규화
+    final dateKey = _normalizeDate(selectedDay);
+    final diary = dummyDiaries[dateKey];
+
+    // 타이머 중복 실행 방지
+    _typingTimer?.cancel();
+
+    setState(() {
+      _currentDialogueIndex = 0;
+      _charIndex = 0;
+      _displayedText = ''; // 텍스트 초기화
+
+      if (diary != null) {
+        _dialogues = [
+          '${selectedDay.month}월 ${selectedDay.day}일 일기를 읽어줄게',
+          diary.title,
+          ...diary.content.split('\n\n'),
+          '오늘 하루 수고했어 💛',
+        ];
+      } else {
+        _dialogues = ['이날은 기록된 이야기가 없네.. 🧸'];
+      }
+    });
+
+    // 애니메이션을 처음(0.0)부터 다시 실행 (중요!)
+    _controller.forward(from: 0.0);
+    _startTyping();
+  }
+  // 일기를 여러 대사로 분할
+  void _splitDialogues() {
+    final title = widget.diary['title'];
+    final content = widget.diary['content'];
+
+    _dialogues = [
+      '${DateTime.now().month}월 ${DateTime.now().day}일 일기를 읽어줄게',
+      title,
+      ...content.split('\n\n'), // 문단별로 분할
+      '오늘 하루 수고했어 💛',
+    ];
+  }
+
+  // 타이핑 효과 시작
+  void _startTyping() {
+    setState(() {
+      _isTyping = true;
+      _displayedText = '';
+      _charIndex = 0;
+    });
+
+    final currentText = _dialogues[_currentDialogueIndex];
+
+    _typingTimer = Timer.periodic(const Duration(milliseconds: 80), (timer) {
+      if (_charIndex < currentText.length) {
+        setState(() {
+          _displayedText += currentText[_charIndex];
+          _charIndex++;
+        });
+      } else {
+        timer.cancel();
+        setState(() {
+          _isTyping = false;
+        });
+      }
+    });
+  }
+
+  // 다음 대사로
+  void _nextDialogue() {
+    // 타이핑 중이면 즉시 완료
+    if (_isTyping) {
+      _typingTimer?.cancel();
+      setState(() {
+        _displayedText = _dialogues[_currentDialogueIndex];
+        _isTyping = false;
+      });
+      return;
+    }
+
+    // 마지막 대사면 닫기
+    if (_currentDialogueIndex >= _dialogues.length - 1) {
+      _close();
+      return;
+    }
+
+    // 다음 대사로
+    setState(() {
+      _currentDialogueIndex++;
+    });
+    _startTyping();
+  }
+
+  // 닫기
+  void _close() {
+    _controller.reverse().then((_) {
+      widget.onClose();
+    });
+  }
+
+  void showRPGDiaryDialog(BuildContext context, Map<String, dynamic> diary) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (context) => DiaryPage(
+        diary: diary,
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
+
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Teddy Bear's diary", style: TextStyle(
+        color: Color(0xFF8B6F47),
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+      ),),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Color(0xFF8B6F47)),
+            onPressed: () {
+              // 설정 페이지로 이동
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // 1. 달력 영역 (화면의 상단 일부 차지)
+          Expanded(
+            flex: 1, // 달력에 더 많은 공간 할당
+            child: DiaryCalendar(onDaySelected: (DateTime selectedDay) { _handleDaySelected(selectedDay); },),
+          ),
+
+          // 2. 대화창 영역
+          Expanded(
+            flex: 1, // 대화창 영역 할당
+            child: GestureDetector(
+              onTap: _nextDialogue,
+              child: Container(
+                // color: Colors.black54, // 이 색상 때문에 달력이 가려질 수 있으니 확인!
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Column(
+                    children: [
+                      const Spacer(flex: 1), // flex 수치 조정
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildTeddyCharacter(),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildDialogueBox(),
+                      // const Spacer(flex: 2),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+
+  }
+  Widget _buildTeddyCharacter() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 800),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, -5 * (1 - value)),
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE4C4),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Text(
+                '🧸',
+                style: TextStyle(fontSize: 48),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 대화창
+  Widget _buildDialogueBox() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFEF0),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF8B6F47),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 화자 이름
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B6F47),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  '곰돌이',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 대사 텍스트
+          SizedBox(
+            height: 80,
+            child: SingleChildScrollView(
+              child: Text(
+                _displayedText + (_isTyping ? '▂' : ''),
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.6,
+                  color: Color(0xFF5D4E37),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // 진행 표시 + 다음 버튼
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 진행도 (3/10)
+              Text(
+                '${_currentDialogueIndex + 1}/${_dialogues.length}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+
+              // 다음 버튼 (타이핑 완료 시만)
+              if (!_isTyping)
+                Row(
+                  children: [
+                    Text(
+                      _currentDialogueIndex >= _dialogues.length - 1
+                          ? '닫기'
+                          : '다음',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF8B6F47),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 12,
+                      color: Color(0xFF8B6F47),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -31,12 +31,16 @@ class ChatLocalDataSource {
     return box.values.toList();
   }
 
-  Future<void> clearAll() async {
+  Future<void> clearAllMessages() async {
     await box.clear();
   }
 
   // ✅ 리소스 정리
   Future<void> dispose() async {
     await _box?.close();
+  }
+
+  Future<dynamic> getAllMessages() async {
+    await _box!;
   }
 }

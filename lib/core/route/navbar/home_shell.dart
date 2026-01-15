@@ -31,10 +31,10 @@ class HomeShell extends StatelessWidget {
                 context.go('/chat');
                 break;
               case 1:
-                context.go('/journal');
+                context.go('/diary');
                 break;
               case 2:
-                context.go('/memorial');
+                context.go('/toTeddy');
                 break;
               case 3:
                 context.go('/settings');
@@ -43,8 +43,8 @@ class HomeShell extends StatelessWidget {
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
-            BottomNavigationBarItem(icon: Icon(Icons.mood), label: '기분'),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: '일기'),
+            BottomNavigationBarItem(icon: Icon(Icons.mood), label: '기분'),
             BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
           ],
     ));

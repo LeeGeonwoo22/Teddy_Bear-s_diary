@@ -1,7 +1,6 @@
-
 import 'package:equatable/equatable.dart';
-
 import '../../../data/model/message.dart';
+
 
 class ChatState extends Equatable {
   final List<Message> messages;
@@ -38,11 +37,7 @@ class ChatState extends Equatable {
   }
 
   factory ChatState.initial() {
-    return ChatState(
-      messages: [
-        Message(msg: 'Hello, How can I help you?', msgType: MessageType.bot)
-      ],
-    );
+    return const ChatState(messages: []);
   }
 }
 
