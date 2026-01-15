@@ -91,13 +91,14 @@ class ChatRepository {
     try{
       // 🔐 암호화 초기화
       final uid = _uid;
-      // 암호화
-      final encryptedUserMsg = _encryption.encrypt(userMsg);
+
       // 사용자 메세지 생성
       final userMessage =
-      Message(msg: encryptedUserMsg, msgType: MessageType.user);
+      Message(msg: userMsg, msgType: MessageType.user);
       // 유저 메세지 로칼 저장
       await local.saveMessage(userMessage);
+      // 암호화
+      final encryptedUserMsg = _encryption.encrypt(userMsg);
 
       await db.collection('users')
               .doc(uid).collection('messages').doc(userMessage.id).set({
@@ -111,12 +112,12 @@ class ChatRepository {
 
       // 2️⃣ AI API 응답
       final answer = await remote.fetchAnswer(userMsg);
-      final encryptedBotMsg = _encryption.encrypt(answer);
       // bot 메세지 생성
       final botMessage =
-      Message(msg: encryptedBotMsg, msgType: MessageType.bot);
-
+      Message(msg: answer, msgType: MessageType.bot);
       await local.saveMessage(botMessage);
+      // 메세지 암호화
+      final encryptedBotMsg = _encryption.encrypt(answer);
 
       await db.collection('users').doc(uid).collection('messages').doc(botMessage.id).set({
         'id' : botMessage.id,
