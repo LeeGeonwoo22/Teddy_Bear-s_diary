@@ -13,8 +13,6 @@ import 'core/common/encryption_service.dart';
 import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/repository/AuthRepository.dart';
 import 'features/chat/bloc/chat_bloc.dart';
-import 'features/chat/repository/chatRemoteDataSource.dart';
-import 'features/chat/repository/chatLocalDataSource.dart';
 import 'firebase_options.dart';
 
 void main() async{

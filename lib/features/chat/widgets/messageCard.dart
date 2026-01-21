@@ -1,12 +1,14 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
+import '../../../core/common/appString.dart';
 import '../../../data/model/message.dart';
 import '../../../core/common/global.dart';
 
 
 class MessageCard extends StatelessWidget {
   final Message message;
-  const MessageCard({super.key, required Message this.message});
+  final bool showTypingEffect;
+  const MessageCard({super.key, required Message this.message, this.showTypingEffect = false});
 
   @override
   Widget build(BuildContext context) {
@@ -14,12 +16,13 @@ class MessageCard extends StatelessWidget {
     const r = Radius.circular(15);
     return message.msgType == MessageType.bot ?
       Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox( width: 6,),
         CircleAvatar(
           radius: 18,
           backgroundColor: Colors.white,
-          child: Image.asset('assets/icons/app_icon.png', width: 24,),
+          child: Image.asset('assets/icons/app_icon.png', width: 24, fit:BoxFit.cover,),
         ),
 
         Container(
@@ -30,11 +33,20 @@ class MessageCard extends StatelessWidget {
             padding:  EdgeInsets.symmetric(horizontal: mq.width * .02, vertical: mq.height * .01),
             child: message.msg.isEmpty ?
             AnimatedTextKit(animatedTexts: [
-              TypewriterAnimatedText(' Please wait....',
+              TypewriterAnimatedText(AppStrings.tr('loading'),
                 speed: Duration(milliseconds: 100),),
             ], repeatForever: true
+            ) :   message.msg == AppStrings.tr('chat_greeting') ?
+            AnimatedTextKit(
+              isRepeatingAnimation: false, // ← 한 번만!
+              animatedTexts: [
+                TypewriterAnimatedText(
+                  message.msg,
+                  speed: Duration(milliseconds: 80),
+                ),
+              ],
             ) : Text(message.msg, textAlign: TextAlign.center,)
-          ),
+          )
         )
       ],
     ) :

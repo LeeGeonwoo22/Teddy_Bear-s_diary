@@ -24,7 +24,7 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
 
   void initState() {
     super.initState();
-
+    context.read<ChatBloc>().add(const LoadMessages());
     // BLoC 상태 변화 감지
     _subscription = context.read<ChatBloc>().stream.listen((state) {
       if (state.messages.isNotEmpty && scrollC.hasClients) {
@@ -140,6 +140,7 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
           {
             // ✅ BLoC에서 필터링된 메시지 사용
             final messages = state.filteredMessages;
+
             final messageWidgets = ChatHelpers.buildMessagesWithDateHeaders(
               messages: messages,
               searchQuery: state.searchQuery,

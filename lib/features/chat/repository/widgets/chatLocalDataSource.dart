@@ -1,7 +1,7 @@
 // chat_local_data_source.dart
 
 import 'package:hive_ce/hive.dart';
-import '../../../data/model/message.dart';
+import '../../../../data/model/message.dart';
 
 class ChatLocalDataSource {
   static const boxName = 'chat_messages';

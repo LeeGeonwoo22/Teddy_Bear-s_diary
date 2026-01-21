@@ -16,17 +16,17 @@ class _DiaryCalendarState extends State<DiaryCalendar> {
   DateTime? _selectedDay;
 
   // 이벤트 데이터 (나중에 실제 일기 유무와 연결 가능)
-  final Map<DateTime, List<String>> _events = {
-    DateTime.utc(2026, 1, 14): ['Meeting with wizard'],
-    DateTime.utc(2026, 1, 18): ['Study magic tome'],
-  };
-
-  List<String> _getEventsForDay(DateTime day) {
-    return _events.entries
-        .where((e) => isSameDay(e.key, day))
-        .expand((e) => e.value)
-        .toList();
-  }
+  // final Map<DateTime, List<String>> _events = {
+  //   DateTime.utc(2026, 1, 14): ['Meeting with wizard'],
+  //   DateTime.utc(2026, 1, 18): ['Study magic tome'],
+  // };
+  //
+  // List<String> _getEventsForDay(DateTime day) {
+  //   return _events.entries
+  //       .where((e) => isSameDay(e.key, day))
+  //       .expand((e) => e.value)
+  //       .toList();
+  // }
 
 
   @override
@@ -44,23 +44,20 @@ class _DiaryCalendarState extends State<DiaryCalendar> {
         focusedDay: _focusedDay,
         // 미래 날짜 클릭 방지 (오늘까지만 활성화)
         enabledDayPredicate: (day) {
-          return day.isBefore(DateTime.now().add(const Duration(hours: 24)));
+          final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+          final checkDay = DateTime(day.year, day.month, day.day);
+
+          return !checkDay.isAfter(today);
         },
         // 1. 선택된 날짜 표시 로직
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
 
         // 2. 이벤트 마커 로더
-        eventLoader: _getEventsForDay,
+        // eventLoader: _getEventsForDay,
 
         // 3. 날짜 클릭 시 동작 (핵심 수정!)
         onDaySelected: (selectedDay, focusedDay) {
-          if (selectedDay.isAfter(DateTime.now())) return;
-          setState(() {
-            _selectedDay = selectedDay;
-            _focusedDay = focusedDay;
-          });
           // 2. 부모에게 날짜 전달
-          widget.onDaySelected(selectedDay);
           // 중요: 부모 위젯(DiaryPage)에게 클릭된 날짜를 전달합니다!
           // widget.onDaySelected를 실행함으로써 DiaryPage의 _handleDaySelected가 실행됩니다.
           widget.onDaySelected(selectedDay);

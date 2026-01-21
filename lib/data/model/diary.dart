@@ -1,31 +1,54 @@
 class Diary {
-  // final String id;           // 고유 ID
-  // final String userId;       // 사용자 ID
-  final DateTime date;       // 날짜
-  final String title;        // 제목
-  final String content;      // 본문
-  final String emotion;      // 감정 (행복, 슬픔, 평온 등)
-  // final List<String> chatIds; // 출처 채팅 ID들
-  // final DateTime createdAt;  // 생성 시간
+  final String id;           // 서버 통신 시 필수
+  final DateTime date;
+  final String title;
+  final String content;
+  final String emotion;
 
   Diary({
+    required this.id,
     required this.date,
     required this.title,
     required this.content,
     required this.emotion,
-    // required this.id,
-    // required this.userId,
-    // required this.chatIds,
-    // required this.createdAt,
   });
 
-  // 위젯에서 사용 중인 Map 형태로 변환하는 도우미 메서드
-  Map<String, dynamic> toMap() {
+  // JSON → Diary 객체
+  factory Diary.fromJson(Map<String, dynamic> json) {
+    return Diary(
+      id: json['id'] as String,
+      date: DateTime.parse(json['date'] as String),
+      title: json['title'] as String,
+      content: json['content'] as String,
+      emotion: json['emotion'] as String,
+    );
+  }
+
+  // Diary 객체 → JSON
+  Map<String, dynamic> toJson() {
     return {
-      'date': date,
+      'id': id,
+      'date': date.toIso8601String(),
       'title': title,
       'content': content,
       'emotion': emotion,
     };
+  }
+
+  // copyWith 메서드 (상태 업데이트 시 유용)
+  Diary copyWith({
+    String? id,
+    DateTime? date,
+    String? title,
+    String? content,
+    String? emotion,
+  }) {
+    return Diary(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      emotion: emotion ?? this.emotion,
+    );
   }
 }

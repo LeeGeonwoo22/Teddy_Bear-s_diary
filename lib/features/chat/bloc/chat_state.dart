@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../core/common/appString.dart';
 import '../../../data/model/message.dart';
 
 
@@ -13,7 +14,16 @@ class ChatState extends Equatable {
     this.isLoading = false,
   });
 
-  // ✅ 검색 필터링된 메시지 (Getter)
+  factory ChatState.initial() {
+    return ChatState(messages: [
+      Message(
+        msg: AppStrings.tr('chat_greeting'),  // ← 초기값!
+        msgType: MessageType.bot,
+      )
+    ]);
+  }
+  // ✅ 검색 필터링된
+  // 메시지 (Getter)
   List<Message> get filteredMessages {
     if (searchQuery.isEmpty) return messages;
     return messages
@@ -34,10 +44,6 @@ class ChatState extends Equatable {
       searchQuery: searchQuery ?? this.searchQuery,
       isLoading: isLoading ?? this.isLoading,
     );
-  }
-
-  factory ChatState.initial() {
-    return const ChatState(messages: []);
   }
 }
 
