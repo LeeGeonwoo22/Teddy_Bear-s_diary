@@ -5,11 +5,10 @@ import 'package:hive_ce/hive.dart';
 import 'package:hive_ce_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
 import 'package:teddyBear/features/auth/repository/AuthRepository.dart';
-import 'package:teddyBear/features/chat/repository/chatRemoteDataSource.dart';
-import 'package:teddyBear/features/chat/repository/chatLocalDataSource.dart';
+import 'package:teddyBear/features/chat/repository/widgets/chatLocalDataSource.dart';
 import 'package:teddyBear/features/chat/repository/chatRepository.dart';
-
 import 'data/model/message.dart';
+import 'features/chat/repository/widgets/chatRemoteDataSource.dart';
 
 class DependencyContainer {
   static final injector = GetIt.instance;
@@ -57,5 +56,6 @@ class DependencyContainer {
         local: injector<ChatLocalDataSource>(), authRepository:injector<AuthRepository>(),
       ),
     );
+    // injector.registerLazySingleton(()=>);
   }
 }

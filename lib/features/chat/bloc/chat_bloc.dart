@@ -37,21 +37,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     try {
       final messages = await _chatRepository.loadMessages();
-
-      // if (messages.isEmpty) {
-      //   // 리스트 형태 객체로 가져와야함.
-      //   messages.add(
-      //     Message(
-      //       msg: AppStrings.tr('chat_greeting'),
-      //       msgType: MessageType.bot,
-      //     )
-      //   );
-      // }
+      final finalMessages = messages.isEmpty ? [
+      Message(
+        msg : AppStrings.tr('chat_greeting'),
+        msgType: MessageType.bot,
+      )
+      ]: messages ;
 
       emit(state.copyWith(
-        messages: messages,
+        messages: finalMessages,
         isLoading: false,
       ));
+
 
       print('✅ 메시지 불러오기 완료: ${messages.length}개');
 
@@ -106,8 +103,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ));
 
       print('✅ 응답 완료: ${res.msg.length}자');
-
-
     } catch (e) {
       // 5. 에러 처리
       print('❌ API 오류: $e');
@@ -149,7 +144,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       emit(state.copyWith(messages: [
         Message(
-          msg: 'Hello! How can I help you?',
+          // msg: 'Hello! How can I help you?',
+          msg : AppStrings.tr('chat_greeting'),
           msgType: MessageType.bot,
         )
       ]));

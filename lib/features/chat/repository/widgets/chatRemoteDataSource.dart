@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
-import '../../../core/common/appString.dart';
-import '../../../core/common/global.dart';
+import '../../../../core/common/appString.dart';
+import '../../../../core/common/global.dart';
 
 
 class ChatRemoteDataSource {

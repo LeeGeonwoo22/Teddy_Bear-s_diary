@@ -29,7 +29,7 @@ class App extends StatelessWidget {
           elevation: 0,
           centerTitle: true,
           titleTextStyle: TextStyle(
-            color: Colors.white,
+            color: Color(0xFF8B6F47),
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),

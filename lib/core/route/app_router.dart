@@ -38,7 +38,7 @@ class AppRouter {
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => SettingPage(),
+            builder: (context, state) => SettingsPage(),
           ),
         ]
         )

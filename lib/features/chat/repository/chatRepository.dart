@@ -1,11 +1,9 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../../core/common/encryption_service.dart';
 import '../../../data/model/message.dart';
 import '../../auth/repository/AuthRepository.dart';
-import 'chatRemoteDataSource.dart';
-import 'chatLocalDataSource.dart';
+import 'widgets/chatRemoteDataSource.dart';
+import 'widgets/chatLocalDataSource.dart';
 
 class ChatRepository {
   final ChatRemoteDataSource remote;
@@ -28,12 +26,6 @@ class ChatRepository {
     return user.uid;
   }
 
-  /// 오늘 날짜 기반 message 문서 ID
-  /*String get _currentMessageId {
-    final today = DateTime.now();
-    return '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-  }*/
-
   /// 메시지 불러오기
   Future<List<Message>> loadMessages({int? limit = 50}) async {
     try {
@@ -49,7 +41,6 @@ class ChatRepository {
           .orderBy('timestamp', descending : false)
           .limit(limit!)
           .get();
-
 
       // 🔓 복호화
       final messages = snapshot.docs.map((doc) {

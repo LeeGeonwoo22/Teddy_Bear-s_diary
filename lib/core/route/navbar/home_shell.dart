@@ -42,9 +42,9 @@ class HomeShell extends StatelessWidget {
             }
           },
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: '이야기'),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: '일기'),
-            BottomNavigationBarItem(icon: Icon(Icons.mood), label: '기분'),
+            BottomNavigationBarItem(icon: Icon(Icons.mood), label: '타로'),
             BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
           ],
     ));
