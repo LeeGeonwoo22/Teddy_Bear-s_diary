@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/common/encryption_service.dart';
 import '../../../data/model/message.dart';
 import '../../auth/repository/AuthRepository.dart';
-import 'widgets/chatRemoteDataSource.dart';
+import '../../../core/common/aIService.dart';
 import 'widgets/chatLocalDataSource.dart';
 
 class ChatRepository {
-  final ChatRemoteDataSource remote;
+  final AIService remote;
   final ChatLocalDataSource local;
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final AuthRepository authRepository;

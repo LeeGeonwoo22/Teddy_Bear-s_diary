@@ -8,7 +8,7 @@ import 'package:teddyBear/features/auth/repository/AuthRepository.dart';
 import 'package:teddyBear/features/chat/repository/widgets/chatLocalDataSource.dart';
 import 'package:teddyBear/features/chat/repository/chatRepository.dart';
 import 'data/model/message.dart';
-import 'features/chat/repository/widgets/chatRemoteDataSource.dart';
+import 'core/common/aIService.dart';
 
 class DependencyContainer {
   static final injector = GetIt.instance;
@@ -46,13 +46,13 @@ class DependencyContainer {
 
     // ✅ remote dataSource
     injector.registerLazySingleton(
-          () => ChatRemoteDataSource(injector<http.Client>()),
+          () => AIService(injector<http.Client>()),
     );
 
     // ✅ chat repository
     injector.registerLazySingleton(
           () => ChatRepository(
-        remote: injector<ChatRemoteDataSource>(),
+        remote: injector<AIService>(),
         local: injector<ChatLocalDataSource>(), authRepository:injector<AuthRepository>(),
       ),
     );
