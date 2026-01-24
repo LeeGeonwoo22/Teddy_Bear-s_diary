@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/common/encryption_service.dart';
+import '../../../data/local/chatDataSource.dart';
 import '../../../data/model/message.dart';
 import '../../auth/repository/AuthRepository.dart';
 import '../../../core/common/aIService.dart';
-import 'widgets/chatLocalDataSource.dart';
 
 class ChatRepository {
   final AIService remote;
-  final ChatLocalDataSource local;
+  final ChatLocalSource local;
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final AuthRepository authRepository;
   final EncryptionService _encryption = EncryptionService();
@@ -152,5 +152,18 @@ class ChatRepository {
       print('❌ 메시지 삭제 실패: $e');
       rethrow;
     }
+  }
+
+  Future<List<Message>> getTodayMessages() async {
+    print('📅 오늘의 대화 가져오기');
+
+    final today = DateTime.now();
+    final startOfDay = DateTime(today.year, today.month, today.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    final messages = await local.getMessages();
+    print('✅ 오늘의 대화 개수: ${messages.length}');
+
+    return messages;
   }
 }

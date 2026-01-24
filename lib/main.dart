@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:teddyBear/features/auth/bloc/auth_bloc.dart';
 import 'package:teddyBear/features/chat/bloc/chat_event.dart';
 import 'package:teddyBear/features/chat/repository/chatRepository.dart';
-import 'package:teddyBear/dependencyContainer.dart';
+import 'package:teddyBear/injectorSetup.dart';
 import 'app.dart';
 import 'core/common/encryption_service.dart';
 import 'features/auth/bloc/auth_event.dart';
@@ -28,7 +28,7 @@ void main() async{
     options: DefaultFirebaseOptions.currentPlatform,
   );
   // 초기화 완료
-  await DependencyContainer.setupLocator();
+  await InjectorSetup.setupLocator();
   // 암호화 테스트
   final encryption = EncryptionService();
   await encryption.init();
@@ -44,9 +44,9 @@ void main() async{
       MultiBlocProvider(
       providers: [
         // authbloc 형성과 동시에 appStarted 이벤트발생
-        BlocProvider<AuthBloc>(create: (_)=>AuthBloc(DependencyContainer.injector.get<AuthRepository>())..add(const AppStarted()),
+        BlocProvider<AuthBloc>(create: (_)=>AuthBloc(InjectorSetup.injector.get<AuthRepository>())..add(const AppStarted()),
         ),
-        BlocProvider<ChatBloc>(create: (_)=>ChatBloc(DependencyContainer.injector.get<ChatRepository>())..add(const LoadMessages()),
+        BlocProvider<ChatBloc>(create: (_)=>ChatBloc(InjectorSetup.injector.get<ChatRepository>())..add(const LoadMessages()),
         )
 
       ],

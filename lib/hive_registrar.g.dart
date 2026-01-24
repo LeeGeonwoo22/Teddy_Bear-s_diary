@@ -3,18 +3,24 @@
 // Check in to version control
 
 import 'package:hive_ce/hive_ce.dart';
+import 'package:teddyBear/data/model/diary.dart';
 import 'package:teddyBear/data/model/message.dart';
+import 'package:teddyBear/data/model/settings.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
+    registerAdapter(DiaryAdapter());
     registerAdapter(MessageAdapter());
     registerAdapter(MessageTypeAdapter());
+    registerAdapter(SettingsAdapter());
   }
 }
 
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
+    registerAdapter(DiaryAdapter());
     registerAdapter(MessageAdapter());
     registerAdapter(MessageTypeAdapter());
+    registerAdapter(SettingsAdapter());
   }
 }

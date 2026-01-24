@@ -3,7 +3,7 @@
 import 'package:hive_ce/hive.dart';
 import '../../../../data/model/message.dart';
 
-class ChatLocalDataSource {
+class ChatLocalSource {
   static const boxName = 'chat_messages';
   Box<Message>? _box;
 
@@ -25,6 +25,20 @@ class ChatLocalDataSource {
 
   Future<void> saveMessage(Message msg) async {
     await box.add(msg);
+  }
+
+  /// 기간별 메시지 조회
+  Future<List<Message>> getMessagesBetween(DateTime start, DateTime end) async {
+    final messages = _box!.values.where((msg) {
+      return msg.timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
+          msg.timestamp.isBefore(end);
+    }).toList();
+
+    // 시간순 정렬
+    messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    print('🔍 ${start.month}/${start.day} ~ ${end.month}/${end.day} 메시지: ${messages.length}개');
+    return messages;
   }
 
   Future<List<Message>> getMessages() async {

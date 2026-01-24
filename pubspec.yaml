@@ -38,6 +38,7 @@ dependencies:
   hive_ce: ^2.16.0
   hive_ce_flutter: ^2.3.3
 
+
   # UI / Animations / Icons
   animated_text_kit: ^4.3.0
   iconsax_flutter: ^1.0.1
@@ -93,5 +94,5 @@ flutter:
     - assets/images/splash/
     - assets/.env
     - assets/prompts/
-    - assets/prompts/quotes/
-    - assets/prompts/reading/
+#    - assets/prompts/quotes/
+#    - assets/prompts/reading/
