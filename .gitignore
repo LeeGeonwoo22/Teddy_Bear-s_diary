@@ -96,6 +96,6 @@ app.*.map.json
                  #assets/.env
 
 assets/prompts/
-assets/prompts/reading/
+assets/prompts/dev/reading/
 assets/dev/
 assets/.env
