@@ -2,8 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:teddyBear/core/common/appString.dart';
 import 'package:teddyBear/features/chat/bloc/chat_event.dart';
 import 'package:teddyBear/features/chat/bloc/chat_state.dart';
-import '../../../data/model/message.dart';
 import '../repository/chatRepository.dart';
+import 'package:teddyBear/data/model/message.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final ChatRepository _chatRepository;

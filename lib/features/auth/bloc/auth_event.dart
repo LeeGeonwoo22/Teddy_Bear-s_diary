@@ -15,11 +15,6 @@ class LoginAsGuest extends AuthEvent {
   const LoginAsGuest();
 }
 
-// ❌ name, email, provider 필요 없음!
-// 이유: Google 로그인 성공하면 Firebase에서 자동으로 받아옴
-//
-// Event는 "소셜 로그인 해줘"라는 의도만 전달
-// 실제 데이터는 Repository에서 Google API 호출 후 받음
 
 class LoginWithGoogle extends AuthEvent {
   const LoginWithGoogle();

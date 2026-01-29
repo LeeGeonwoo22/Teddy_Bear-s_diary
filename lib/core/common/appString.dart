@@ -4,6 +4,7 @@ class AppStrings {
   static const Map<String, Map<String, String>> localized = {
     'ko': {
       'chat_greeting': '안녕 반가워. 오늘은 무슨 이야기를 해줄꺼야 ? 🧸',
+      'diary_greeting' : "어느 일기를 같이 읽어볼까 ? 🧸",
       'error_api': '곰돌이가 잠시 쉬고 있어요... 🧸 잠시 후 다시 시도해주세요.',
       'loading': '잠시만 기다려주세요...',
     },

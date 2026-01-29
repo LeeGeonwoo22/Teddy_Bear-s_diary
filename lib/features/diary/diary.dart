@@ -1,27 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart' as DateHelper;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:teddyBear/features/diary/widgets/diaryCalendar.dart';
-import 'package:teddyBear/features/diary/widgets/dummy.dart';
-import '../../data/model/diary.dart';
-
+import 'bloc/diary_bloc.dart';
+import 'bloc/diary_event.dart';
+import 'bloc/diary_state.dart';
 
 class DiaryPage extends StatefulWidget {
-  final Map<String, dynamic> diary;
-  final VoidCallback onClose;
-
-  const DiaryPage({
-        super.key,
-        required this.diary,
-        required this.onClose,
-  });
+  const DiaryPage({super.key});  // ✅ diary, onClose 파라미터 제거 (안 쓰니까)
 
   @override
   State<DiaryPage> createState() => _DiaryPageState();
 }
 
 class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMixin {
-
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -34,17 +26,28 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
   List<String> _dialogues = [];
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
-    // animation 컨트롤러
-    _controller = AnimationController(duration : const Duration(milliseconds: 500), vsync: this,);
-    _fadeAnimation = Tween<double>(begin: 0.0, end : 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
-    _slideAnimation = Tween<Offset>(begin: Offset(0, 0.5), end: Offset.zero).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    // animation 등장
+
+    // 앱 시작 시 전체 일기 불러오기
+    context.read<DiaryBloc>().add(const LoadDiaries());
+
+    // Animation 초기화
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
     _controller.forward();
+
     // 초기 대사
-    _dialogues = ["어느 일기를 같이 읽어볼까 ? 🧸"];
-    // 타이핑 효과
+    _dialogues = ["어느 일기를 같이 읽어볼까? 🧸"];
     _startTyping();
   }
 
@@ -54,35 +57,10 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
     _controller.dispose();
     super.dispose();
   }
-  // 1. 날짜 정규화 함수 (시/분/초를 0으로 맞춤)
-  // DateTime _normalizeDate(DateTime date) {
-  //   return DateTime(date.year, date.month, date.day);
-  // }
-  // 날짜별 일기 읽어주기
+
+  // 날짜 클릭 핸들러
   void _handleDaySelected(DateTime selectedDay) {
-    // 클릭한 날짜와 더미 데이터의 키 값을 동일하게 정규화
-    final dateKey = DateHelper.normalizeDate((selectedDay));
-    final diary = dummyDiaries[dateKey];
-    // 타이머 중복 실행 방지
-    _typingTimer?.cancel();
-    setState(() {
-      _currentDialogueIndex = 0;
-      _charIndex = 0;
-      _displayedText = ''; // 텍스트 초기화
-      if (diary != null) {
-        _dialogues = [
-          '${selectedDay.month}월 ${selectedDay.day}일 일기를 읽어줄게',
-          diary.title,
-          ...diary.content.split('\n\n'),
-          '오늘 하루 수고했어 💛',
-        ];
-      } else {
-        _dialogues = ['이 날은 기록된 이야기가 없네.. 🧸'];
-      }
-    });
-    // 애니메이션을 처음(0.0)부터 다시 실행 (중요!)
-    _controller.forward(from: 0.0);
-    _startTyping();
+    context.read<DiaryBloc>().add(SelectDiary(selectedDay));
   }
 
   // 타이핑 효과 시작
@@ -109,11 +87,9 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
         });
       }
     });
-
   }
 
   void _nextDialogue() {
-    // 타이핑 중이면 즉시 완료
     if (_isTyping) {
       _typingTimer?.cancel();
       setState(() {
@@ -122,83 +98,115 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
       });
       return;
     }
+
     if (_currentDialogueIndex >= _dialogues.length - 1) {
       _close();
       return;
     }
+
     setState(() {
       _currentDialogueIndex++;
     });
     _startTyping();
   }
 
-  // 닫기
   void _close() {
     setState(() {
-      _dialogues = ["어느 일기를 같이 읽어볼까 ? 🧸"];
+      _dialogues = ["어느 일기를 같이 읽어볼까? 🧸"];
       _currentDialogueIndex = 0;
       _displayedText = "";
     });
-
     _startTyping();
   }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Teddy Bear's Diary", style: TextStyle(
-        color: Color(0xFF8B6F47),
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-      ),),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Color(0xFF8B6F47)),
-            onPressed: () {
-              // 설정 페이지로 이동
-            },
+    return BlocListener<DiaryBloc, DiaryState>(
+      listener: (context, state) {
+        // 날짜 선택 시 대사 업데이트
+        if (state.selectedDate != null) {
+          _typingTimer?.cancel();
+
+          setState(() {
+            _currentDialogueIndex = 0;
+            _charIndex = 0;
+            _displayedText = '';
+
+            if (state.selectedDiary != null) {
+              final diary = state.selectedDiary!;
+              _dialogues = [
+                '${state.selectedDate!.month}월 ${state.selectedDate!.day}일 일기를 읽어줄게',
+                diary.title,
+                ...diary.content.split('\n\n'),
+                '오늘 하루 수고했어 💛',
+              ];
+            } else {
+              _dialogues = ['이 날은 기록된 이야기가 없네.. 🧸'];
+            }
+          });
+
+          _controller.forward(from: 0.0);
+          _startTyping();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            "Teddy Bear's Diary",
+            style: TextStyle(
+              color: Color(0xFF8B6F47),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // 1. 달력 영역 (화면의 상단 일부 차지)
-          Expanded(
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined, color: Color(0xFF8B6F47)),
+              onPressed: () {
+                // 설정 페이지로 이동
+              },
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            // 달력 영역
+            Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                child: DiaryCalendar(onDaySelected: (DateTime selectedDay) { _handleDaySelected(selectedDay); },),
-              )),
-          // 2. 대화창 영역
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: GestureDetector(
-                onTap: _nextDialogue,
-                child: Container(
-                  // color: Colors.black54, // 이 색상 때문에 달력이 가려질 수 있으니 확인!
+                child: DiaryCalendar(onDaySelected: _handleDaySelected),
+              ),
+            ),
+
+            // 대화창 영역
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: GestureDetector(
+                  onTap: _nextDialogue,
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: Column(
                       children: [
-                        const Spacer(flex: 1), // flex 수치 조정
+                        const Spacer(flex: 1),
                         SlideTransition(
                           position: _slideAnimation,
                           child: _buildTeddyCharacter(),
                         ),
                         const SizedBox(height: 20),
                         _buildDialogueBox(),
-                        // const Spacer(flex: 2),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-// 곰돌이 캐릭터
   Widget _buildTeddyCharacter() {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -221,10 +229,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
               ],
             ),
             child: const Center(
-              child: Text(
-                '🧸',
-                style: TextStyle(fontSize: 48),
-              ),
+              child: Text('🧸', style: TextStyle(fontSize: 48)),
             ),
           ),
         );
@@ -232,7 +237,6 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
     );
   }
 
-  // 대화창
   Widget _buildDialogueBox() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -240,10 +244,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
       decoration: BoxDecoration(
         color: const Color(0xFFFFFEF0),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF8B6F47),
-          width: 2,
-        ),
+        border: Border.all(color: const Color(0xFF8B6F47), width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.15),
@@ -256,14 +257,10 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 화자 이름
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF8B6F47),
                   borderRadius: BorderRadius.circular(4),
@@ -279,10 +276,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
-          // 대사 텍스트
           SizedBox(
             height: 80,
             child: SingleChildScrollView(
@@ -297,30 +291,19 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
               ),
             ),
           ),
-
           const SizedBox(height: 12),
-
-          // 진행 표시 + 다음 버튼
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // 진행도 (3/10)
               Text(
                 '${_currentDialogueIndex + 1}/${_dialogues.length}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
               ),
-
-              // 다음 버튼 (타이핑 완료 시만)
               if (!_isTyping)
                 Row(
                   children: [
                     Text(
-                      _currentDialogueIndex >= _dialogues.length - 1
-                          ? '닫기'
-                          : '다음',
+                      _currentDialogueIndex >= _dialogues.length - 1 ? '닫기' : '다음',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF8B6F47),
