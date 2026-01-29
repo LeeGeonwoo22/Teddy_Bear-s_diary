@@ -13,6 +13,8 @@ import 'core/common/encryption_service.dart';
 import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/repository/AuthRepository.dart';
 import 'features/chat/bloc/chat_bloc.dart';
+import 'features/diary/bloc/diary_bloc.dart';
+import 'features/diary/repository/diaryRepository.dart';
 import 'firebase_options.dart';
 
 void main() async{
@@ -32,14 +34,10 @@ void main() async{
   // 암호화 테스트
   final encryption = EncryptionService();
   await encryption.init();
+
+
   print('✅ 암호화 초기화 완료');
 
-  // 암호화 테스트
-  final encrypted = encryption.encrypt('테스트 메시지');
-  print('🔒 암호화 결과: $encrypted');
-
-  final decrypted = encryption.decrypt(encrypted);
-  print('🔓 복호화 결과: $decrypted');
   runApp(
       MultiBlocProvider(
       providers: [
@@ -47,8 +45,12 @@ void main() async{
         BlocProvider<AuthBloc>(create: (_)=>AuthBloc(InjectorSetup.injector.get<AuthRepository>())..add(const AppStarted()),
         ),
         BlocProvider<ChatBloc>(create: (_)=>ChatBloc(InjectorSetup.injector.get<ChatRepository>())..add(const LoadMessages()),
-        )
-
+        ),
+        BlocProvider<DiaryBloc>(
+          create: (_) => DiaryBloc(
+            InjectorSetup.injector<DiaryRepository>(),
+          ),
+        ),
       ],
       child: App()));
 }

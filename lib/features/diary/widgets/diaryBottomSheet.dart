@@ -79,19 +79,6 @@ class DiaryBottomSheet extends StatelessWidget {
                               color: const Color(0xFFE8D5C4),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              children: [
-                                const Text('🎵', style: TextStyle(fontSize: 14)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  diary['music'],
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF8B6F47),
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
                         ],
                       ),

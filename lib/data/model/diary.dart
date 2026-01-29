@@ -15,13 +15,13 @@ class Diary extends HiveObject with EquatableMixin {
   final String content;
 
   @HiveField(3)
-  final String emotion;
+  final String? emotion;
 
   Diary({
     required this.date,
     required this.title,
     required this.content,
-    required this.emotion,
+    this.emotion,
   });
 
   // ✅ copyWith (수정용)

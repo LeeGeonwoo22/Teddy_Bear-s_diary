@@ -76,7 +76,7 @@ class ChatRepository {
     }
   }
 
-  /// 메시지 전송 (Firestore 배열에 추가)
+  /// 메시지 전송
   Future<Message> sendMessage(String userMsg) async {
 
     try{
@@ -92,7 +92,7 @@ class ChatRepository {
       final encryptedUserMsg = _encryption.encrypt(userMsg);
 
       await db.collection('users')
-              .doc(uid).collection('messages').doc(userMessage.id).set({
+          .doc(uid).collection('messages').doc(userMessage.id).set({
         'id' : userMessage.id,
         'msg' : encryptedUserMsg,
         'msgType' : userMessage.msgType.name,
@@ -133,13 +133,14 @@ class ChatRepository {
       final uid = _uid;
       final batch = db.batch();
 
-      // 개별 문서 삭제
+      // Firestore의 모든 메시지 문서 조회
       final messageDocs = await db
           .collection('users')
           .doc(uid)
           .collection('messages')
           .get();
 
+      // Batch 삭제
       for (var doc in messageDocs.docs) {
         batch.delete(doc.reference);
       }
@@ -148,22 +149,72 @@ class ChatRepository {
       await local.clearAllMessages();
 
       print('🗑️ 모든 메시지 삭제 완료');
+
     } catch (e) {
       print('❌ 메시지 삭제 실패: $e');
       rethrow;
     }
   }
 
+  /// 오늘의 메시지 가져오기
   Future<List<Message>> getTodayMessages() async {
     print('📅 오늘의 대화 가져오기');
 
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
     final messages = await local.getMessages();
-    print('✅ 오늘의 대화 개수: ${messages.length}');
+
+    print('✅ 오늘의 대화 개수: ${messages.length}개');
 
     return messages;
+  }
+
+  // ========== 헬퍼 메서드 ==========
+
+  /// Timestamp 안전하게 파싱
+  DateTime _parseTimestamp(dynamic timestamp) {
+    if (timestamp is Timestamp) {
+      return timestamp.toDate();
+    } else if (timestamp is String) {
+      return DateTime.tryParse(timestamp) ?? DateTime.now();
+    } else {
+      return DateTime.now();
+    }
+  }
+
+  /// MessageType 안전하게 파싱
+  MessageType _parseMessageType(dynamic type) {
+    if (type == null) return MessageType.user;
+
+    final typeStr = type.toString().toLowerCase();
+
+    switch (typeStr) {
+      case 'bot':
+        return MessageType.bot;
+      case 'user':
+        return MessageType.user;
+      default:
+        return MessageType.user;
+    }
+  }
+
+  /// 로컬 캐시 업데이트
+  Future<void> _updateLocalCache(List<Message> messages) async {
+    await local.clearAllMessages();
+
+    for (var message in messages) {
+      await local.saveMessage(message);
+    }
+  }
+
+  /// 로컬 캐시에서 메시지 불러오기
+  Future<List<Message>> _loadFromLocalCache() async {
+    try {
+      final cachedMessages = await local.getMessages();
+      print('⚠️ 로컬 캐시에서 복구: ${cachedMessages.length}개');
+      return cachedMessages;
+
+    } catch (e) {
+      print('❌ 로컬 캐시도 실패: $e');
+      return [];
+    }
   }
 }

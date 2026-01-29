@@ -1,3 +1,4 @@
+// core/common/encryption_service.dart
 import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 

@@ -30,7 +30,7 @@ class AppRouter {
           ),
           GoRoute(
             path: '/diary',
-            builder: (context, state) => DiaryPage(diary: {}, onClose: () {  },),
+            builder: (context, state) => DiaryPage(),
           ),
           GoRoute(
             path: '/toTeddy',

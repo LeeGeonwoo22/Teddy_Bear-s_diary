@@ -86,7 +86,7 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: 16),
                             CustomBtn(
                               onTap: () {
-                                print('시작');
+
                                 context.read<AuthBloc>().add(LoginAsGuest());
                               },
                               text: '시작',
