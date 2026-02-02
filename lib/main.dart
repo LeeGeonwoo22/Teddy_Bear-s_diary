@@ -42,9 +42,11 @@ void main() async{
       MultiBlocProvider(
       providers: [
         // authbloc 형성과 동시에 appStarted 이벤트발생
-        BlocProvider<AuthBloc>(create: (_)=>AuthBloc(InjectorSetup.injector.get<AuthRepository>())..add(const AppStarted()),
+        BlocProvider<AuthBloc>(create: (_)=>AuthBloc(
+            InjectorSetup.injector.get<AuthRepository>())..add(const AppStarted()),
         ),
-        BlocProvider<ChatBloc>(create: (_)=>ChatBloc(InjectorSetup.injector.get<ChatRepository>())..add(const LoadMessages()),
+        BlocProvider<ChatBloc>(create: (_)=>ChatBloc(
+            InjectorSetup.injector.get<ChatRepository>())..add(const LoadMessages()),
         ),
         BlocProvider<DiaryBloc>(
           create: (_) => DiaryBloc(

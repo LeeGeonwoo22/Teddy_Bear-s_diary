@@ -140,14 +140,18 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
               Expanded(
                 child: TextFormField(
                   controller: textC,
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.start,
                   onTapOutside: (e) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(
                       fillColor: Colors.white,
                       filled: true,
                       isDense: true,
-                      hintText: 'Ask me anything you want...',
-                      hintStyle: TextStyle(fontSize: 14),
+                      // hintText: 'Ask me anything you want...',
+                      // hintStyle: TextStyle(fontSize: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(50))
                       )

@@ -20,7 +20,7 @@ class DiaryAdapter extends TypeAdapter<Diary> {
       date: fields[0] as DateTime,
       title: fields[1] as String,
       content: fields[2] as String,
-      emotion: fields[3] as String,
+      emotion: fields[3] as String?,
     );
   }
 

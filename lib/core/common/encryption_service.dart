@@ -1,97 +1,93 @@
 // core/common/encryption_service.dart
 import 'package:encrypt/encrypt.dart' as enc;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'global.dart';
 
+/// 🔐 EncryptionService
+/// - AES-256 사용
+/// - Key는 .env에서 고정 로드 (절대 런타임 생성 ❌)
+/// - IV는 암호화할 때마다 새로 생성 (보안 필수)
 class EncryptionService {
-  static const _storage = FlutterSecureStorage();
-  static const _keyStorageKey = 'encryption_key';
-
-  // 🔒 싱글톤 패턴
+  // 🔒 싱글톤 (앱 전역에서 동일 키 사용)
   static final EncryptionService _instance = EncryptionService._internal();
   factory EncryptionService() => _instance;
   EncryptionService._internal();
 
-  enc.Key? _key;
+  late final enc.Key _key;
+  late final enc.Encrypter _encrypter;
   enc.IV? _iv;
-  enc.Encrypter? _encrypter;
   bool _isInitialized = false;
 
-  /// ✅ 명시적 초기화
+  /// ✅ 명시적 초기화 (main 또는 injector에서 1회 호출)
   Future<void> init() async {
-    if (_isInitialized) {
-      print('⚠️ 암호화 서비스 이미 초기화됨');
-      return;
+    if (_isInitialized) return;
+
+    final keyString = Encryption_KEY;
+
+    if (keyString == null) {
+      throw Exception('❌ ENCRYPTION_KEY not found in .env');
     }
 
-    print('🔧 암호화 초기화 중...');
-
-    try {
-      // 1️⃣ 저장된 키 불러오기
-      String? storedKey = await _storage.read(key: _keyStorageKey);
-
-      if (storedKey == null) {
-        _key = enc.Key.fromSecureRandom(32);
-        await _storage.write(key: _keyStorageKey, value: _key!.base64);
-        print('✅ 새 암호화 키 생성 완료');
-      } else {
-        _key = enc.Key.fromBase64(storedKey);
-        print('✅ 기존 암호화 키 불러옴');
-      }
-
-      // 2️⃣ IV 생성 (고정 IV — 실무에선 메시지별 랜덤 IV 권장)
-      _iv = enc.IV.fromLength(16);
-
-      // 3️⃣ Encrypter 초기화
-      _encrypter = enc.Encrypter(enc.AES(_key!));
-
-      _isInitialized = true;
-      print('✅ 암호화 서비스 초기화 완료');
-    } catch (e) {
-      print('❌ 암호화 초기화 실패: $e');
-      _isInitialized = false;
-      rethrow;
+    if (keyString.length != 32) {
+      throw Exception('❌ ENCRYPTION_KEY must be exactly 32 characters');
     }
+
+    _key = enc.Key.fromUtf8(keyString);
+    _iv = enc.IV.fromLength(16); // ⚠️ 고정 IV (의도적)
+    _encrypter = enc.Encrypter(
+      enc.AES(_key!, mode: enc.AESMode.cbc),
+    );
+
+    _isInitialized = true;
+    print('✅ EncryptionService initialized successfully');
   }
 
+
   /// 🔐 암호화
-  String encrypt(String plainText) {
-    if (!_isInitialized || _encrypter == null) {
-      print('⚠️ 암호화 서비스가 초기화되지 않음 — 평문 반환');
-      return plainText;
+  /// - IV는 메시지마다 새로 생성
+  /// - cipher + iv 를 함께 저장해야 함
+  Map<String, String> encrypt(String plainText) {
+    if (!_isInitialized) {
+      throw Exception('❌ EncryptionService not initialized');
     }
 
-    try {
-      final encrypted = _encrypter!.encrypt(plainText, iv: _iv!);
-      return encrypted.base64;
-    } catch (e) {
-      print('❌ 암호화 실패: $e');
-      return plainText;
-    }
+    // 1️⃣ 메시지별 랜덤 IV 생성 (보안 핵심)
+    final iv = enc.IV.fromSecureRandom(16);
+
+    // 2️⃣ 암호화
+    final encrypted = _encrypter.encrypt(
+      plainText,
+      iv: iv,
+    );
+
+    // 3️⃣ Firestore / Hive 저장용 구조
+    return {
+      'cipher': encrypted.base64,
+      'iv': iv.base64,
+    };
   }
 
   /// 🔓 복호화
-  String decrypt(String encryptedText) {
-    if (!_isInitialized || _encrypter == null) {
-      print('⚠️ 암호화 서비스가 초기화되지 않음 — 암호문 그대로 반환');
-      return encryptedText;
+  /// - 반드시 "암호화 당시 사용한 IV"를 함께 전달해야 함
+  String decrypt({
+    required String cipherText,
+    required String ivBase64,
+  }) {
+    if (!_isInitialized) {
+      throw Exception('❌ EncryptionService not initialized');
     }
 
     try {
-      final encrypted = enc.Encrypted.fromBase64(encryptedText);
-      return _encrypter!.decrypt(encrypted, iv: _iv!);
-    } catch (e) {
-      print('❌ 복호화 실패: $e');
-      return encryptedText;
-    }
-  }
+      final encrypted = enc.Encrypted.fromBase64(cipherText);
+      final iv = enc.IV.fromBase64(ivBase64);
 
-  /// 🗑️ 키 삭제 (로그아웃 시)
-  Future<void> deleteKey() async {
-    await _storage.delete(key: _keyStorageKey);
-    _key = null;
-    _iv = null;
-    _encrypter = null;
-    _isInitialized = false;
-    print('🗑️ 암호화 키 삭제 완료');
+      return _encrypter.decrypt(
+        encrypted,
+        iv: iv,
+      );
+    } catch (e) {
+      print('❌ Decryption failed: $e');
+      // ❗ 실서비스에서는 여기서 fallback 처리 권장
+      return cipherText;
+    }
   }
 }

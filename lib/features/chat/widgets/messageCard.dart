@@ -18,49 +18,67 @@ class MessageCard extends StatelessWidget {
       Row(
         crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 아바타
         SizedBox( width: 6,),
         CircleAvatar(
           radius: 18,
-          backgroundColor: Colors.white,
+          // backgroundColor: Colors.white,
           child: Image.asset('assets/icons/app_icon.png', width: 24, fit:BoxFit.cover,),
         ),
-
-        Container(
-          constraints: BoxConstraints(maxWidth: mq.width * .6),
-          margin: EdgeInsets.only(bottom : mq.height * .02, left: mq.width * .02),
-          decoration: BoxDecoration(border: Border.all(color: Colors.black54), borderRadius: BorderRadius.only(topLeft: r, topRight: r,  bottomRight: r)),
-          child: Padding(
-            padding:  EdgeInsets.symmetric(horizontal: mq.width * .02, vertical: mq.height * .01),
-            child: message.msg.isEmpty ?
-            AnimatedTextKit(animatedTexts: [
-              TypewriterAnimatedText(AppStrings.tr('loading'),
-                speed: Duration(milliseconds: 100),),
-            ], repeatForever: true
-            ) :   message.msg == AppStrings.tr('chat_greeting') ?
-            AnimatedTextKit(
-              isRepeatingAnimation: false, // ← 한 번만!
-              animatedTexts: [
-                TypewriterAnimatedText(
-                  message.msg,
-                  speed: Duration(milliseconds: 80),
-                ),
-              ],
-            ) : Text(message.msg, textAlign: TextAlign.center,)
-          )
+        // 메세지
+        Flexible(
+          child: Container(
+            constraints: BoxConstraints(maxWidth: mq.width * .6),
+            margin: EdgeInsets.only(bottom : mq.height * .02, left: mq.width * .02),
+            decoration: BoxDecoration(
+                border: Border.all(color: Colors.black54),
+                borderRadius: BorderRadius.only(topLeft: r, topRight: r,  bottomRight: r)
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: mq.width * .02, vertical: mq.height * .01),
+              child: message.msg.isEmpty ?
+              AnimatedTextKit(
+                  animatedTexts: [
+                    TypewriterAnimatedText(AppStrings.tr('loading'),
+                    speed: Duration(milliseconds: 100),),
+                  ],
+                    repeatForever: true
+              ) :
+              message.msg == AppStrings.tr('chat_greeting') ?
+              AnimatedTextKit(
+                isRepeatingAnimation: false, // ← 한 번만!
+                animatedTexts: [
+                  TypewriterAnimatedText(
+                    message.msg,
+                    speed: Duration(milliseconds: 80),
+                  ),
+                ],
+              ) : Text(message.msg, textAlign: TextAlign.center, softWrap: true,
+                overflow: TextOverflow.visible,)
+            )
+          ),
         )
       ],
     ) :
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Container(
-              margin: EdgeInsets.only(bottom : mq.height * .02, left: mq.width * .02),
-              decoration: BoxDecoration(border: Border.all(color: Colors.black54), borderRadius: BorderRadius.only(topLeft: r, topRight: r,  bottomLeft: r)),
-              child: Padding(
-                padding:  EdgeInsets.symmetric(horizontal: mq.width * .02, vertical: mq.height * .01),
-                child: Text(message.msg),
+            Flexible(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: mq.width * .6, // ⭐ 추가 권장 (중요)
+                ),
+                margin: EdgeInsets.only(bottom : mq.height * .02, left: mq.width * .02),
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black54),
+                    borderRadius: BorderRadius.only(topLeft: r, topRight: r,  bottomLeft: r)),
+                child: Padding(
+                  padding:  EdgeInsets.symmetric(horizontal: mq.width * .02, vertical: mq.height * .01),
+                  child: Text(message.msg),
+                ),
               ),
             ),
+            SizedBox( width: 6,),
             CircleAvatar(
               radius: 18,
               backgroundColor: Colors.white,

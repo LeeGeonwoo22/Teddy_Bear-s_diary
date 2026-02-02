@@ -125,12 +125,19 @@ class DiaryRepository {
             continue;
           }
 
-          // 📌 2. 복호화
-          final encryptedTitle = data['title'] as String;
-          final encryptedContent = data['content'] as String;
+          // // 📌 2. 복호화
+          // final encryptedTitle = data['title'] as String;
+          // final encryptedContent = data['content'] as String;
 
-          final decryptedTitle = _encryption.decrypt(encryptedTitle);
-          final decryptedContent = _encryption.decrypt(encryptedContent);
+          final decryptedTitle = _encryption.decrypt(
+            cipherText: data['title'],
+            ivBase64: data['titleIv'],
+          );
+
+          final decryptedContent = _encryption.decrypt(
+            cipherText: data['content'],
+            ivBase64: data['contentIv'],
+          );
 
           if (decryptedTitle.isEmpty || decryptedContent.isEmpty) {
             print('⚠️ 복호화 실패: ${doc.id}');
