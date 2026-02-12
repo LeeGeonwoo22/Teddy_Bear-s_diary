@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:teddyBear/features/chat/repository/chatRepository.dart';
 import '../../../core/common/aIService.dart';
-import '../../../core/common/date_utils.dart';
+import '../../../core/common/dateFormatter.dart';
 import '../../../core/common/encryption_service.dart';
 import '../../../data/local/diaryDataSource.dart';
 import '../../../data/model/diary.dart';
@@ -36,8 +36,8 @@ class DiaryRepository {
   Future<Diary?> createTodayDiary() async {
     try {
       final uid = _uid;
-      final today = DateUtils.normalizeDate(DateTime.now());
-      final dateKey = DateUtils.formatDate(DateTime.now());
+      final today = DateFormatter.normalizeDate(DateTime.now());
+      final dateKey = DateFormatter.formatDate(DateTime.now());
 
       // 중복 체크
       final snapshot = await db

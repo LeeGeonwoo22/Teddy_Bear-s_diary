@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:teddyBear/features/settings/repository/settingRepository.dart';
+import 'package:teddyBear/features/settings/widgets/setting_dialog.dart';
+import 'package:teddyBear/features/settings/widgets/setting_picker.dart';
+import 'package:teddyBear/features/settings/widgets/setting_ui_helper.dart';
+import '../../core/common/dateFormatter.dart';
 import '../../data/model/settings.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/bloc/auth_event.dart';
@@ -60,28 +64,28 @@ class _SettingsPageState extends State<SettingsPage> {
           body: ListView(
             children: [
         // 일기 설정
-              _buildSectionHeader('📅 일기 설정'),
+              SettingUiHelper.buildSectionHeader('📅 일기 설정'),
 
               ListTile(
                 leading: Icon(Icons.schedule),
                 title: Text('자동 생성 시간'),
                 subtitle: Text('매일 ${_settings?.diaryCreationHour}시에 일기 생성'),
                 trailing: Icon(Icons.chevron_right),
-                onTap: () => _showHourPicker(),
+                onTap: () => SettingPicker.showHourPicker(context: context, settings: _settings, onSettingsChanged: _loadSettings),
               ),
 
               ListTile(
                 leading: Icon(Icons.text_fields),
                 title: Text('일기 길이'),
-                subtitle: Text(_getDiaryLengthText(_settings?.diaryLength ?? 0)),
+                subtitle: Text(SettingUiHelper.getDiaryLengthText(_settings?.diaryLength ?? 0)),
                 trailing: Icon(Icons.chevron_right),
-                onTap: () => _showLengthPicker(),
+                onTap: () => SettingPicker.showLengthPicker(context: context, settings: _settings, onSettingsChanged: _loadSettings),
               ),
 
               Divider(),
 
          // 알림 설정
-              _buildSectionHeader('🔔 알림'),
+              SettingUiHelper.buildSectionHeader('🔔 알림'),
 
               SwitchListTile(
                 secondary: Icon(Icons.notifications),
@@ -108,49 +112,49 @@ class _SettingsPageState extends State<SettingsPage> {
               Divider(),
 
               // 🎨 테마 설정
-              _buildSectionHeader('🎨 테마'),
+              SettingUiHelper.buildSectionHeader('🎨 테마'),
 
               ListTile(
                 leading: Icon(Icons.palette),
                 title: Text('테마 모드'),
-                subtitle: Text(_getThemeText(_settings?.theme ?? 'light')),
+                subtitle: Text(SettingUiHelper.getThemeText(_settings?.theme ?? 'light')),
                 trailing: Icon(Icons.chevron_right),
-                onTap: () => _showThemePicker(),
+                onTap: () => SettingPicker.showThemePicker(context: context, settings: _settings, onSettingsChanged: _loadSettings),
               ),
 
               Divider(),
 
               // 💾 데이터 관리
-              _buildSectionHeader('💾 데이터 관리'),
+              SettingUiHelper.buildSectionHeader('💾 데이터 관리'),
 
               ListTile(
                 leading: Icon(Icons.backup, color: Colors.blue),
                 title: Text('데이터 백업'),
                 subtitle: _settings?.lastBackupDate != null
-                    ? Text('마지막 백업: ${_formatDate(_settings?.lastBackupDate! ?? DateTime.now())}')
+                    ? Text('마지막 백업: ${DateFormatter.formatDate(_settings?.lastBackupDate! ?? DateTime.now())}')
                     : Text('아직 백업하지 않았어요'),
-                onTap: () => _showBackupDialog(),
+                onTap: () => SettingDialog.showBackupDialog(context: context),
               ),
 
               ListTile(
                 leading: Icon(Icons.refresh, color: Colors.orange),
                 title: Text('대화 내용 리셋'),
                 subtitle: Text('일기는 유지되고 대화만 삭제돼요'),
-                onTap: () => _showResetChatDialog(),
+                onTap: () => SettingDialog.showResetChatDialog(context: context),
               ),
 
               ListTile(
                 leading: Icon(Icons.delete_forever, color: Colors.red),
                 title: Text('전체 초기화'),
                 subtitle: Text('대화 + 일기 모두 삭제'),
-                onTap: () => _showResetAllDialog(),
+                onTap: () => SettingDialog.showResetAllDialog(context: context),
               ),
 
               Divider(),
 
               // 👤 계정 관리
 
-              _buildSectionHeader('👤 계정'),
+              SettingUiHelper.buildSectionHeader('👤 계정'),
 
               if (isGuest)
                 ListTile(
@@ -167,13 +171,13 @@ class _SettingsPageState extends State<SettingsPage> {
               ListTile(
                 leading: Icon(Icons.logout, color: Colors.grey),
                 title: Text('로그아웃'),
-                onTap: () => _showLogoutDialog(),
+                onTap: () => SettingDialog.showLogoutDialog(context: context),
               ),
 
               ListTile(
                 leading: Icon(Icons.person_remove, color: Colors.red),
                 title: Text('회원 탈퇴'),
-                onTap: () => _showDeleteAccountDialog(),
+                onTap: () => SettingDialog.showDeleteAccountDialog(context: context),
               ),
 
               SizedBox(height: 24),
@@ -207,204 +211,5 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       }
     );
-  }
-  // 🎨 UI 헬퍼
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF8B6F47),
-        ),
-      ),
-    );
-  }
-
-  String _getDiaryLengthText(int length) {
-    switch (length) {
-      case 0:
-        return '짧게 (약 200자)';
-      case 1:
-        return '보통 (약 300자)';
-      case 2:
-        return '길게 (약 500자)';
-      default:
-        return '보통';
-    }
-  }
-
-  String _getThemeText(String theme) {
-    switch (theme) {
-      case 'light':
-        return '라이트 모드';
-      case 'dark':
-        return '다크 모드';
-      case 'system':
-        return '시스템 설정 따름';
-      default:
-        return '라이트 모드';
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}.${date.month}.${date.day}';
-  }
-
-  // 🎯 다이얼로그
-
-  Future<void> _showHourPicker() async {
-    await showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        height: 300,
-        child: ListView.builder(
-          itemCount: 24,
-          itemBuilder: (context, hour) {
-            final isSelected = hour == _settings?.diaryCreationHour;
-            return ListTile(
-              leading: Icon(
-                Icons.access_time,
-                color: isSelected ? Colors.blue : Colors.grey,
-              ),
-              title: Text(
-                '${hour}시',
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              trailing: isSelected ? Icon(Icons.check, color: Colors.blue) : null,
-              onTap: () async {
-                // await SettingsManager.setDiaryCreationHour(hour);
-                // _loadSettings();
-                // Navigator.pop(context);
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showLengthPicker() async {
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('일기 길이 선택'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<int>(
-              title: Text('짧게 (약 200자)'),
-              value: 0,
-              groupValue: _settings?.diaryLength,
-              onChanged: (value) async {
-                // await SettingsManager.setDiaryLength(value!);
-                // _loadSettings();
-                // Navigator.pop(context);
-              },
-            ),
-            RadioListTile<int>(
-              title: Text('보통 (약 300자)'),
-              value: 1,
-              groupValue: _settings?.diaryLength,
-              onChanged: (value) async {
-                // await SettingsManager.setDiaryLength(value!);
-                // _loadSettings();
-                // Navigator.pop(context);
-              },
-            ),
-            RadioListTile<int>(
-              title: Text('길게 (약 500자)'),
-              value: 2,
-              groupValue: _settings?.diaryLength,
-              onChanged: (value) async {
-                // await SettingsManager.setDiaryLength(value!);
-                // _loadSettings();
-                // Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _showThemePicker() async {
-    // TODO: 테마 선택 다이얼로그
-  }
-
-  Future<void> _showBackupDialog() async {
-    // TODO: 백업 기능
-  }
-
-  Future<void> _showResetChatDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('⚠️ 대화 내용 리셋'),
-        content: Text('모든 대화 내용이 삭제됩니다.\n일기는 유지됩니다.\n\n정말 진행하시겠어요?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text('삭제'),
-          ),
-        ],
-      ),
-    );
-
-    // if (confirmed == true) {
-    //   await chatRepository.clearAllMessages();
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(content: Text('✅ 대화 내용이 삭제되었어요')),
-    //   );
-    // }
-  }
-
-  Future<void> _showResetAllDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('⚠️ 전체 초기화'),
-        content: Text('대화 + 일기가 모두 삭제됩니다.\n이 작업은 되돌릴 수 없어요!\n\n정말 진행하시겠어요?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text('전체 삭제'),
-          ),
-        ],
-      ),
-    );
-
-    // if (confirmed == true) {
-    //   await chatRepository.clearAllMessages();
-    //   await diaryRepository.clearAllDiaries();
-    //   await SettingsManager.resetSettings();
-    //
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(content: Text('✅ 모든 데이터가 삭제되었어요')),
-    //   );
-    // }
-  }
-
-  Future<void> _showLogoutDialog() async {
-    // TODO: 로그아웃 기능
-  }
-
-  Future<void> _showDeleteAccountDialog() async {
-    // TODO: 회원 탈퇴 기능
   }
 }
