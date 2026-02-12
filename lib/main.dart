@@ -14,6 +14,7 @@ import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/repository/AuthRepository.dart';
 import 'features/chat/bloc/chat_bloc.dart';
 import 'features/diary/bloc/diary_bloc.dart';
+import 'features/diary/bloc/diary_event.dart';
 import 'features/diary/repository/diaryRepository.dart';
 import 'firebase_options.dart';
 
@@ -42,13 +43,15 @@ void main() async{
       MultiBlocProvider(
       providers: [
         // authbloc 형성과 동시에 appStarted 이벤트발생
-        BlocProvider<AuthBloc>(create: (_)=>AuthBloc(InjectorSetup.injector.get<AuthRepository>())..add(const AppStarted()),
+        BlocProvider<AuthBloc>(create: (_)=>AuthBloc(
+            InjectorSetup.injector.get<AuthRepository>())..add(const AppStarted()),
         ),
-        BlocProvider<ChatBloc>(create: (_)=>ChatBloc(InjectorSetup.injector.get<ChatRepository>())..add(const LoadMessages()),
+        BlocProvider<ChatBloc>(create: (_)=>ChatBloc(
+            InjectorSetup.injector.get<ChatRepository>())..add(const LoadMessages()),
         ),
         BlocProvider<DiaryBloc>(
           create: (_) => DiaryBloc(
-            InjectorSetup.injector<DiaryRepository>(),
+            InjectorSetup.injector<DiaryRepository>())..add(const LoadDiaries(),
           ),
         ),
       ],

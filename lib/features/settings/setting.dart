@@ -1,11 +1,11 @@
-// screens/settings/settings_page.dart
-
 import 'package:flutter/material.dart';
-import 'package:teddyBear/features/chat/repository/chatRepository.dart';
-import 'package:teddyBear/features/diary/repository/diaryRepository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:teddyBear/features/settings/repository/settingRepository.dart';
 import '../../data/model/settings.dart';
-import '../../main.dart'; // Repository 접근
+import '../auth/bloc/auth_bloc.dart';
+import '../auth/bloc/auth_event.dart';
+import '../auth/bloc/auth_state.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -30,7 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _isLoading = true;
     });
 
-    final loaded = Settingrepository.getSettings();
+    final loaded = SettingRepository.getSettings();
 
     setState(() {
       _settings = loaded ?? Settings(); // ← null이면 기본값 생성
@@ -48,162 +48,167 @@ class _SettingsPageState extends State<SettingsPage> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('⚙️ 설정'),
-      ),
-      body: ListView(
-        children: [
-          // ========================================
-          // 📅 일기 설정
-          // ========================================
-          _buildSectionHeader('📅 일기 설정'),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        final user = authState.user;
+        final isGuest = authState.isGuest;
 
-          ListTile(
-            leading: Icon(Icons.schedule),
-            title: Text('자동 생성 시간'),
-            subtitle: Text('매일 ${_settings?.diaryCreationHour}시에 일기 생성'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () => _showHourPicker(),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('⚙️ 설정'),
           ),
+          body: ListView(
+            children: [
+        // 일기 설정
+              _buildSectionHeader('📅 일기 설정'),
 
-          ListTile(
-            leading: Icon(Icons.text_fields),
-            title: Text('일기 길이'),
-            subtitle: Text(_getDiaryLengthText(_settings?.diaryLength ?? 0)),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () => _showLengthPicker(),
-          ),
+              ListTile(
+                leading: Icon(Icons.schedule),
+                title: Text('자동 생성 시간'),
+                subtitle: Text('매일 ${_settings?.diaryCreationHour}시에 일기 생성'),
+                trailing: Icon(Icons.chevron_right),
+                onTap: () => _showHourPicker(),
+              ),
 
-          Divider(),
+              ListTile(
+                leading: Icon(Icons.text_fields),
+                title: Text('일기 길이'),
+                subtitle: Text(_getDiaryLengthText(_settings?.diaryLength ?? 0)),
+                trailing: Icon(Icons.chevron_right),
+                onTap: () => _showLengthPicker(),
+              ),
 
-          // ========================================
-          // 🔔 알림 설정
-          // ========================================
-          _buildSectionHeader('🔔 알림'),
+              Divider(),
 
-          SwitchListTile(
-            secondary: Icon(Icons.notifications),
-            title: Text('일기 생성 알림'),
-            subtitle: Text('일기가 완성되면 알려드려요'),
-            value: _settings?.notificationEnabled ?? false,
-            onChanged: (value) async {
-              // await SettingsManager.setNotificationEnabled(value);
-              // _loadSettings();
-            },
-          ),
+         // 알림 설정
+              _buildSectionHeader('🔔 알림'),
 
-          SwitchListTile(
-            secondary: Icon(Icons.chat_bubble_outline),
-            title: Text('대화 리마인더'),
-            subtitle: Text('곰돌이와 대화하지 않은 날 알림'),
-            value: _settings?.chatReminderEnabled ?? false,
-            onChanged: (value) async {
-              // await SettingsManager.setNotificationEnabled(value);
-              // _loadSettings();
-            },
-          ),
+              SwitchListTile(
+                secondary: Icon(Icons.notifications),
+                title: Text('일기 생성 알림'),
+                subtitle: Text('일기가 완성되면 알려드려요'),
+                value: _settings?.notificationEnabled ?? false,
+                onChanged: (value) async {
+                  // await SettingsManager.setNotificationEnabled(value);
+                  // _loadSettings();
+                },
+              ),
 
-          Divider(),
+              SwitchListTile(
+                secondary: Icon(Icons.chat_bubble_outline),
+                title: Text('대화 리마인더'),
+                subtitle: Text('곰돌이와 대화하지 않은 날 알림'),
+                value: _settings?.chatReminderEnabled ?? false,
+                onChanged: (value) async {
+                  // await SettingsManager.setNotificationEnabled(value);
+                  // _loadSettings();
+                },
+              ),
 
-          // ========================================
-          // 🎨 테마 설정
-          // ========================================
-          _buildSectionHeader('🎨 테마'),
+              Divider(),
 
-          ListTile(
-            leading: Icon(Icons.palette),
-            title: Text('테마 모드'),
-            subtitle: Text(_getThemeText(_settings?.theme ?? 'light')),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () => _showThemePicker(),
-          ),
+              // 🎨 테마 설정
+              _buildSectionHeader('🎨 테마'),
 
-          Divider(),
+              ListTile(
+                leading: Icon(Icons.palette),
+                title: Text('테마 모드'),
+                subtitle: Text(_getThemeText(_settings?.theme ?? 'light')),
+                trailing: Icon(Icons.chevron_right),
+                onTap: () => _showThemePicker(),
+              ),
 
-          // ========================================
-          // 💾 데이터 관리
-          // ========================================
-          _buildSectionHeader('💾 데이터 관리'),
+              Divider(),
 
-          ListTile(
-            leading: Icon(Icons.backup, color: Colors.blue),
-            title: Text('데이터 백업'),
-            subtitle: _settings?.lastBackupDate != null
-                ? Text('마지막 백업: ${_formatDate(_settings?.lastBackupDate! ?? DateTime.now())}')
-                : Text('아직 백업하지 않았어요'),
-            onTap: () => _showBackupDialog(),
-          ),
+              // 💾 데이터 관리
+              _buildSectionHeader('💾 데이터 관리'),
 
-          ListTile(
-            leading: Icon(Icons.refresh, color: Colors.orange),
-            title: Text('대화 내용 리셋'),
-            subtitle: Text('일기는 유지되고 대화만 삭제돼요'),
-            onTap: () => _showResetChatDialog(),
-          ),
+              ListTile(
+                leading: Icon(Icons.backup, color: Colors.blue),
+                title: Text('데이터 백업'),
+                subtitle: _settings?.lastBackupDate != null
+                    ? Text('마지막 백업: ${_formatDate(_settings?.lastBackupDate! ?? DateTime.now())}')
+                    : Text('아직 백업하지 않았어요'),
+                onTap: () => _showBackupDialog(),
+              ),
 
-          ListTile(
-            leading: Icon(Icons.delete_forever, color: Colors.red),
-            title: Text('전체 초기화'),
-            subtitle: Text('대화 + 일기 모두 삭제'),
-            onTap: () => _showResetAllDialog(),
-          ),
+              ListTile(
+                leading: Icon(Icons.refresh, color: Colors.orange),
+                title: Text('대화 내용 리셋'),
+                subtitle: Text('일기는 유지되고 대화만 삭제돼요'),
+                onTap: () => _showResetChatDialog(),
+              ),
 
-          Divider(),
+              ListTile(
+                leading: Icon(Icons.delete_forever, color: Colors.red),
+                title: Text('전체 초기화'),
+                subtitle: Text('대화 + 일기 모두 삭제'),
+                onTap: () => _showResetAllDialog(),
+              ),
 
-          // ========================================
-          // 👤 계정 관리
-          // ========================================
-          _buildSectionHeader('👤 계정'),
+              Divider(),
 
-          ListTile(
-            leading: Icon(Icons.logout, color: Colors.grey),
-            title: Text('로그아웃'),
-            onTap: () => _showLogoutDialog(),
-          ),
+              // 👤 계정 관리
 
-          ListTile(
-            leading: Icon(Icons.person_remove, color: Colors.red),
-            title: Text('회원 탈퇴'),
-            onTap: () => _showDeleteAccountDialog(),
-          ),
+              _buildSectionHeader('👤 계정'),
 
-          SizedBox(height: 24),
-
-          // ========================================
-          // ℹ️ 앱 정보
-          // ========================================
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  'Teddy Bear Diary',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
+              if (isGuest)
+                ListTile(
+                  leading: const Icon(
+                    Icons.login_rounded,
+                    color: Color(0xFF4CAF50),
                   ),
+                  title: const Text('소셜 로그인 연동'),
+                  onTap: () {
+                    context.read<AuthBloc>().add(LoginWithGoogle());
+                  },
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Version 1.0.0',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
 
-          SizedBox(height: 24),
-        ],
-      ),
+              ListTile(
+                leading: Icon(Icons.logout, color: Colors.grey),
+                title: Text('로그아웃'),
+                onTap: () => _showLogoutDialog(),
+              ),
+
+              ListTile(
+                leading: Icon(Icons.person_remove, color: Colors.red),
+                title: Text('회원 탈퇴'),
+                onTap: () => _showDeleteAccountDialog(),
+              ),
+
+              SizedBox(height: 24),
+
+              // ℹ️ 앱 정보
+              Center(
+                child: Column(
+                  children: [
+                    Text(
+                      'Teddy Bear Diary',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Version 1.0.0',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 24),
+            ],
+          ),
+        );
+      }
     );
   }
-
-  // ========================================
   // 🎨 UI 헬퍼
-  // ========================================
 
   Widget _buildSectionHeader(String title) {
     return Padding(
@@ -249,9 +254,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return '${date.year}.${date.month}.${date.day}';
   }
 
-  // ========================================
   // 🎯 다이얼로그
-  // ========================================
 
   Future<void> _showHourPicker() async {
     await showModalBottomSheet(

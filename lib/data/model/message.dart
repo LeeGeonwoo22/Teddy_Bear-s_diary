@@ -56,15 +56,33 @@ class Message extends Equatable {
     'timestamp': Timestamp.fromDate(timestamp),
   };
 
-  factory Message.fromJson(Map<String, dynamic> json) => Message(
-    id: json['id'] as String,
-    msg: json['msg'] as String,
-    msgType: MessageType.values.firstWhere(
-          (e) => e.name == json['msgType'],
-      orElse: () => MessageType.bot,
-    ),
-    timestamp: DateTime.parse(json['timestamp']),
-  );
+  factory Message.fromJson(Map<String, dynamic> json) {
+    // 1️⃣ timestamp 안전하게 파싱
+    DateTime parsedTimestamp;
+
+    if (json['timestamp'] == null) {
+      parsedTimestamp = DateTime.now();
+    } else if (json['timestamp'] is Timestamp) {
+      // Firestore Timestamp 객체
+      parsedTimestamp = (json['timestamp'] as Timestamp).toDate();
+    } else if (json['timestamp'] is String) {
+      // ISO 8601 문자열
+      parsedTimestamp = DateTime.parse(json['timestamp']);
+    } else {
+      // 그 외 (정수 등)
+      parsedTimestamp = DateTime.now();
+    }
+
+    return Message(
+      id: json['id'] as String,
+      msg: json['msg'] as String,
+      msgType: MessageType.values.firstWhere(
+            (e) => e.name == json['msgType'],
+        orElse: () => MessageType.bot,
+      ),
+      timestamp: parsedTimestamp,  // ✅ 안전하게 파싱된 timestamp
+    );
+  }
 
   @override
   String toString() =>

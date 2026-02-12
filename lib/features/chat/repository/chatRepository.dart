@@ -42,14 +42,44 @@ class ChatRepository {
           .limit(limit!)
           .get();
 
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+
+        print('🔍 데이터 타입 확인:');
+        print('  msg: ${data['msg'].runtimeType} = ${data['msg']}');
+        print('  timestamp: ${data['timestamp'].runtimeType}');
+      }
+
       // 🔓 복호화
       final messages = snapshot.docs.map((doc) {
         final data = doc.data();
-        final decryptedMsg = _encryption.decrypt(data['msg']);
-        return Message.fromJson({
-          ...data,
-          'msg': decryptedMsg,
-        });
+        final rawMsg = data['msg'];
+        late final String decryptedMsg;
+        if (rawMsg == null) {
+          // ❌ msg 자체가 없는 경우
+          decryptedMsg = '';
+        }
+        else if (rawMsg is String) {
+          // 🔙 과거 평문 메시지
+          decryptedMsg = rawMsg;
+        }
+        else if (rawMsg is Map<String, dynamic>) {
+          // ✅ 암호화 메시지
+          decryptedMsg = _encryption.decrypt(
+            cipherText: rawMsg['cipher'],
+            ivBase64: rawMsg['iv'],
+          );
+        }
+        else {
+          // 🚨 예상 못한 타입
+          decryptedMsg = '';
+        }
+        return Message(
+          id: data['id'],
+          msg: decryptedMsg,
+          msgType: MessageType.values.byName(data['msgType']),
+          timestamp: (data['timestamp'] as Timestamp).toDate(),
+        );
       }).toList();
 
       print('✅ Firestore에서 ${messages.length}개 메시지 불러옴 (복호화 완료)');
@@ -59,10 +89,10 @@ class ChatRepository {
       for (var message in messages) {
         await local.saveMessage(message);
       }
-
       return messages;
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('❌ Firestore 실패: $e');
+      print('위치: $stackTrace'); // ← 어디서 에러났는지 확인
       // 로컬 캐시에서 복구
       try{
         final cachedMessages = await local.getMessages();
@@ -90,16 +120,22 @@ class ChatRepository {
       await local.saveMessage(userMessage);
       // 암호화
       final encryptedUserMsg = _encryption.encrypt(userMsg);
+      // 암호화 반환값 테스트
+      final encryptedData = _encryption.encrypt('테스트');
+      print('🔍 encrypt 반환 타입: ${encryptedData.runtimeType}');
+      print('🔍 encrypt 반환 값: $encryptedData');
+      print('📤 사용자 메시지 저장 완료 (암호화됨)');
 
       await db.collection('users')
-          .doc(uid).collection('messages').doc(userMessage.id).set({
-        'id' : userMessage.id,
-        'msg' : encryptedUserMsg,
-        'msgType' : userMessage.msgType.name,
-        'timestamp' : Timestamp.fromDate(userMessage.timestamp)
+          .doc(uid).collection('messages')
+          .doc(userMessage.id)
+          .set({
+            'id' : userMessage.id,
+            'msg' : encryptedUserMsg,
+            'msgType' : userMessage.msgType.name,
+            'timestamp' : Timestamp.fromDate(userMessage.timestamp)
       });
 
-      print('📤 사용자 메시지 저장 완료 (암호화됨)');
 
       // 2️⃣ AI API 응답
       final answer = await remote.fetchAnswer(userMsg);
@@ -158,13 +194,15 @@ class ChatRepository {
 
   /// 오늘의 메시지 가져오기
   Future<List<Message>> getTodayMessages() async {
-    print('📅 오늘의 대화 가져오기');
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day);
+    final end = start.add(const Duration(days: 1));
 
-    final messages = await local.getMessages();
+    final messages = await local.getMessagesBetween(start, end);
 
-    print('✅ 오늘의 대화 개수: ${messages.length}개');
-
-    return messages;
+    return messages
+        .where((m) => m.msgType == MessageType.user)
+        .toList();
   }
 
   // ========== 헬퍼 메서드 ==========

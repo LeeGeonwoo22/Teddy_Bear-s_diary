@@ -75,10 +75,12 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
           // 로딩 다이얼로그 (선택사항)
         }
 
-        if (state.selectedDiary != null) {
+        final diary = state.diaries[state.selectedDate];
+
+        if (diary != null) {
           print('✅ 일기 생성 완료!');
-          print('제목: ${state.selectedDiary!.title}');
-          print('내용: ${state.selectedDiary!.content}');
+          print('제목: ${diary!.title}');
+          print('내용: ${diary!.content}');
 
           // 스낵바로 알림
           ScaffoldMessenger.of(context).showSnackBar(
@@ -140,14 +142,18 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
               Expanded(
                 child: TextFormField(
                   controller: textC,
-                  textAlign: TextAlign.center,
+                  textAlign: TextAlign.start,
                   onTapOutside: (e) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(
                       fillColor: Colors.white,
                       filled: true,
                       isDense: true,
-                      hintText: 'Ask me anything you want...',
-                      hintStyle: TextStyle(fontSize: 14),
+                      // hintText: 'Ask me anything you want...',
+                      // hintStyle: TextStyle(fontSize: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(50))
                       )

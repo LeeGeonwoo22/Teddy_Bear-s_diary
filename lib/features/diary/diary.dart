@@ -131,9 +131,9 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
             _currentDialogueIndex = 0;
             _charIndex = 0;
             _displayedText = '';
+            final diary = state.diaries[state.selectedDate];
+            if (diary != null) {
 
-            if (state.selectedDiary != null) {
-              final diary = state.selectedDiary!;
               _dialogues = [
                 '${state.selectedDate!.month}월 ${state.selectedDate!.day}일 일기를 읽어줄게',
                 diary.title,
@@ -168,40 +168,44 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
             ),
           ],
         ),
-        body: Column(
-          children: [
-            // 달력 영역
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                child: DiaryCalendar(onDaySelected: _handleDaySelected),
+        body: Container(
+          child: Column(
+            children: [
+              // 달력 영역
+              Flexible(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  child: DiaryCalendar(onDaySelected: _handleDaySelected),
+                ),
               ),
-            ),
 
-            // 대화창 영역
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: GestureDetector(
-                  onTap: _nextDialogue,
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: Column(
-                      children: [
-                        const Spacer(flex: 1),
-                        SlideTransition(
-                          position: _slideAnimation,
-                          child: _buildTeddyCharacter(),
-                        ),
-                        const SizedBox(height: 20),
-                        _buildDialogueBox(),
-                      ],
+              // 대화창 영역
+              Flexible(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: GestureDetector(
+                    onTap: _nextDialogue,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Column(
+                        children: [
+                          const Spacer(flex: 1),
+                          SlideTransition(
+                            position: _slideAnimation,
+                            child: _buildTeddyCharacter(),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildDialogueBox(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
