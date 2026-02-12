@@ -194,13 +194,15 @@ class ChatRepository {
 
   /// 오늘의 메시지 가져오기
   Future<List<Message>> getTodayMessages() async {
-    print('📅 오늘의 대화 가져오기');
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day);
+    final end = start.add(const Duration(days: 1));
 
-    final messages = await local.getMessages();
+    final messages = await local.getMessagesBetween(start, end);
 
-    print('✅ 오늘의 대화 개수: ${messages.length}개');
-
-    return messages;
+    return messages
+        .where((m) => m.msgType == MessageType.user)
+        .toList();
   }
 
   // ========== 헬퍼 메서드 ==========

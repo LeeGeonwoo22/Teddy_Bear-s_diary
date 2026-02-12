@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:teddyBear/features/chat/repository/chatRepository.dart';
 import '../../../core/common/aIService.dart';
 import '../../../core/common/date_utils.dart';
@@ -45,6 +46,7 @@ class DiaryRepository {
           .collection('diaries')  // ✅ 통일
           .doc(dateKey)
           .get();
+          // .where('date', isGreaterThanOrEqualTo: startOfMonth)
 
       if (snapshot.exists) {
         throw Exception('오늘 일기는 이미 존재합니다');
@@ -52,10 +54,17 @@ class DiaryRepository {
 
       // 오늘 대화 가져오기
       final todayMessages = await chatRepository.getTodayMessages();
-      if (todayMessages.isEmpty) {
-        print('⚠️ 오늘 대화 없음');
+      if (todayMessages.length < 20) {
+        print('⚠️ 곰돌이에게 오늘 이야기를 더 해주세요');
         return null;
       }
+
+      // final todayMessages = await chatRepository.getTodayUserMessages();
+      //
+      // if (todayMessages.length < 2 {
+      //   return null;
+      // }
+
 
       print('✅ 오늘 대화 ${todayMessages.length}개 불러옴');
 
@@ -65,9 +74,9 @@ class DiaryRepository {
       // Diary 객체 생성
       final diary = Diary(
         date: today,
-        title: '오늘의 일기',  // ✅ 임시 제목 (나중에 AI 응답 파싱)
+        title: '오늘의 일기',
         content: content,
-        emotion: '',  // ✅ 초기값
+        emotion: '',
       );
 
       // 암호화
@@ -102,8 +111,8 @@ class DiaryRepository {
     // ✅ 여기서 함수 끝! 아래 주석 코드들 전부 삭제
   }
 
-  Future<Map<DateTime, Diary>?> loadDiaries() async {
-    try{
+  Future<Map<DateTime, Diary>> loadDiaries() async {
+    try {
       final uid = _uid;
       final snapshot = await db
           .collection('users')
@@ -115,45 +124,57 @@ class DiaryRepository {
 
       final diariesMap = <DateTime, Diary>{};
 
-      // 복호화를 풀어야 하기 때문에 모든 문서를 불러줘야함 일단.
       for (var doc in snapshot.docs) {
-        try{
+        try {
           final data = doc.data();
+
+          print('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          print('🔍 문서 ID: ${doc.id}');
+          print('🔍 title 타입: ${data['title'].runtimeType}');
+          print('🔍 title 값: ${data['title']}');
+          print('🔍 content 타입: ${data['content'].runtimeType}');
+          print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
           if (data['title'] == null || data['content'] == null) {
             print('⚠️ 필수 필드 없음: ${doc.id}');
             continue;
           }
 
-          // // 📌 2. 복호화
-          // final encryptedTitle = data['title'] as String;
-          // final encryptedContent = data['content'] as String;
+          // ✅ Map으로 캐스팅
+          final titleMap = data['title'] as Map<String, dynamic>;
+          final contentMap = data['content'] as Map<String, dynamic>;
 
-          final decryptedTitle = _encryption.decrypt(
-            cipherText: data['title'],
-            ivBase64: data['titleIv'],
-          );
+          String decryptedTitle;
+          String decryptedContent;
 
-          final decryptedContent = _encryption.decrypt(
-            cipherText: data['content'],
-            ivBase64: data['contentIv'],
-          );
+          try {
+            // ✅ Map에서 cipher와 iv를 추출하여 전달
+            decryptedTitle = _encryption.decrypt(
+              cipherText: titleMap['cipher'] as String,
+              ivBase64: titleMap['iv'] as String,
+            );
+
+            decryptedContent = _encryption.decrypt(
+              cipherText: contentMap['cipher'] as String,
+              ivBase64: contentMap['iv'] as String,
+            );
+
+            print('✅ 복호화 성공!');
+            print('   제목: $decryptedTitle');
+            print('   내용 (앞 100자): ${decryptedContent.substring(0, decryptedContent.length > 100 ? 100 : decryptedContent.length)}');
+
+          } catch (e) {
+            print('❌ 복호화 실패: ${doc.id}');
+            print('   에러: $e');
+            continue;  // ✅ 복호화 실패하면 이 일기는 건너뛰기
+          }
 
           if (decryptedTitle.isEmpty || decryptedContent.isEmpty) {
-            print('⚠️ 복호화 실패: ${doc.id}');
+            print('⚠️ 복호화 후 빈 문자열: ${doc.id}');
             continue;
           }
 
-          // 정규화된 날짜 부르기
-          // 무슨날짜를 넣지 ??
-          // final normalizeDate = DateUtils.normalizeDate(date);
-          // diary 객체 생성
-          // final diary = Diary(
-          //     date: ,
-          //     title: '',
-          //     content: ''
-          // );
-          // 📌 3. 날짜 파싱 및 정규화
+          // 날짜 파싱 및 정규화
           final timestamp = data['date'] as Timestamp;
           final dateTime = timestamp.toDate();
           final normalizedDate = DateTime(
@@ -162,7 +183,9 @@ class DiaryRepository {
             dateTime.day,
           );
 
-          // 📌 4. Diary 객체 생성
+          print('📅 정규화된 날짜: ${normalizedDate.year}-${normalizedDate.month}-${normalizedDate.day}');
+
+          // Diary 객체 생성
           final diary = Diary(
             date: normalizedDate,
             title: decryptedTitle,
@@ -170,23 +193,28 @@ class DiaryRepository {
             emotion: data['emotion'] as String? ?? '',
           );
 
-          // 📌 5. Map에 추가
+          // Map에 추가
           diariesMap[normalizedDate] = diary;
+          print('✅ 일기 추가 완료 (총 ${diariesMap.length}개)\n');
 
-        }catch(e){
+        } catch (e, stackTrace) {
           print('⚠️ 일기 파싱 실패 (${doc.id}): $e');
+          print('스택 트레이스: $stackTrace');
           continue;
         }
       }
-      print('✅ ${diariesMap.length}개 일기 불러옴 (복호화 완료)');
 
-      // 📌 6. Local 캐시 업데이트 (선택사항)
+      print('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print('✅ 최종 결과: ${diariesMap.length}개 일기 불러옴');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
       await _updateLocalCache(diariesMap.values.toList());
 
       return diariesMap;
 
-    }catch(e){
+    } catch (e, stackTrace) {
       print('❌ Firestore 조회 실패: $e');
+      print('스택 트레이스: $stackTrace');
       return await _loadFromLocalCache();
     }
   }

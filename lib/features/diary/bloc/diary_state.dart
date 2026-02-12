@@ -4,7 +4,6 @@ import '../../../data/model/diary.dart';
 class DiaryState extends Equatable {
   // 📚 일기 데이터
   final Map<DateTime, Diary> diaries;
-  final Diary? selectedDiary;  // ← 이거 보여주면 됨!
   final DateTime? selectedDate;
 
   // ⏳ 로딩
@@ -14,7 +13,7 @@ class DiaryState extends Equatable {
 
   const DiaryState({
     this.diaries = const {},
-    this.selectedDiary,
+
     this.selectedDate,
     this.isLoading = false,
     this.isGenerating = false,
@@ -29,7 +28,6 @@ class DiaryState extends Equatable {
   // 📝 copyWith (불변성 유지)
   DiaryState copyWith({
     Map<DateTime, Diary>? diaries,
-    Diary? selectedDiary,
     DateTime? selectedDate,
     bool? isLoading,
     bool? isGenerating,
@@ -37,7 +35,7 @@ class DiaryState extends Equatable {
   }) {
     return DiaryState(
       diaries: diaries ?? this.diaries,
-      selectedDiary: selectedDiary ?? this.selectedDiary,
+
       selectedDate: selectedDate ?? this.selectedDate,
       isLoading: isLoading ?? this.isLoading,
       isGenerating: isGenerating ?? this.isGenerating,
@@ -49,7 +47,6 @@ class DiaryState extends Equatable {
   @override
   List<Object?> get props => [
     diaries,
-    selectedDiary,
     selectedDate,
     isLoading,
     isGenerating,

@@ -16,9 +16,15 @@ class DiaryCalendar extends StatefulWidget {
 }
 
 class _DiaryCalendarState extends State<DiaryCalendar> {
-  DateTime _focusedDay = DateTime.now();
+  late DateTime _focusedDay;
   DateTime? _selectedDay;
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _focusedDay = DateTime.now();
+  }
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<DiaryBloc, DiaryState>(
@@ -51,9 +57,10 @@ class _DiaryCalendarState extends State<DiaryCalendar> {
 
             // 3. 날짜 클릭 시 동작 (핵심 수정!)
             onDaySelected: (selectedDay, focusedDay) {
-              // 2. 부모에게 날짜 전달
-              // 중요: 부모 위젯(DiaryPage)에게 클릭된 날짜를 전달합니다!
-              // widget.onDaySelected를 실행함으로써 DiaryPage의 _handleDaySelected가 실행됩니다.
+              setState(() {
+                // 선택한 날짜의 달로 업데이트
+                _focusedDay = focusedDay;
+              });
               widget.onDaySelected(selectedDay);
             },
 

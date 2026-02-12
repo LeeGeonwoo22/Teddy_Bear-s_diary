@@ -14,11 +14,50 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
     on<LoadDiaries>(_onLoadDiaries);
   }
 
+
+  /// 1️⃣ 앱 / 탭 진입 시 전체 일기 로드
+  Future<void> _onLoadDiaries(
+      LoadDiaries event,
+      Emitter<DiaryState> emit,
+      )
+  async {
+    emit(state.copyWith(isLoading: true));
+
+    try {
+      final diaries = await _repository.loadDiaries();
+      // Map<DateTime, Diary>
+
+      emit(state.copyWith(
+        diaries: diaries,
+        isLoading: false,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: '일기를 불러올 수 없습니다',
+      ));
+    }
+  }
+
+  // void _onSelectDiary(
+  //     SelectDiary event,
+  //     Emitter<DiaryState> emit,
+  //     ) {
+  //   final normalizedDate = DateTime(
+  //     event.date.year,
+  //     event.date.month,
+  //     event.date.day,
+  //   );
+  //
+  //   emit(state.copyWith(
+  //     selectedDate: normalizedDate,
+  //   ));
+  // }
   Future<void> _onGenerateTodayDiary(
       GenerateDiary event,
       Emitter<DiaryState> emit,
       )
-  async {
+    async {
     print('📝 일기 생성 시작...');
     emit(state.copyWith(isGenerating: true));
 
@@ -36,7 +75,6 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
       // 성공!
       emit(state.copyWith(
         isGenerating: false,
-        selectedDiary: diary,
       ));
 
       print('✅ 일기 생성 완료!');
@@ -48,46 +86,13 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
         errorMessage: '일기 생성 실패: $e',
       ));
     }
-  }
-  Future<void> _onLoadDiaries(
-      LoadDiaries event,
-      Emitter<DiaryState> emit,
-      )
-  async{
-
-    try {
-      final diary = await _repository.createTodayDiary();
-
-      if (diary == null) {
-        emit(state.copyWith(
-          isGenerating: false,
-          errorMessage: '오늘 대화 내용이 없어요',
-        ));
-        return;
-      }
-
-      // 성공!
-      emit(state.copyWith(
-        isGenerating: false,
-        selectedDiary: diary,
-      ));
-
-      print('✅ 일기 생성 완료!');
-
-    } catch (e) {
-      print('❌ 일기 생성 실패: $e');
-      emit(state.copyWith(
-        isGenerating: false,
-        errorMessage: '일기 생성 실패: $e',
-      ));
-    }
-
   }
 
   Future<void> _onSelectDiary(
       SelectDiary event,
       Emitter<DiaryState> emit,
-      ) async {
+      )
+  async {
     final normalizedDate = DateTime(
       event.date.year,
       event.date.month,
@@ -98,7 +103,7 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
 
     emit(state.copyWith(
       selectedDate: normalizedDate,
-      selectedDiary: diary,
+
     ));
 
     if (diary != null) {

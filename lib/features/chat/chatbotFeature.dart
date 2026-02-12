@@ -75,10 +75,12 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
           // 로딩 다이얼로그 (선택사항)
         }
 
-        if (state.selectedDiary != null) {
+        final diary = state.diaries[state.selectedDate];
+
+        if (diary != null) {
           print('✅ 일기 생성 완료!');
-          print('제목: ${state.selectedDiary!.title}');
-          print('내용: ${state.selectedDiary!.content}');
+          print('제목: ${diary!.title}');
+          print('내용: ${diary!.content}');
 
           // 스낵바로 알림
           ScaffoldMessenger.of(context).showSnackBar(

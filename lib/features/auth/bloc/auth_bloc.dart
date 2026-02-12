@@ -80,6 +80,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final guestUser = app_user.User.guest(uuid: firebaseUid);
 
       emit(AuthState.guest(firebaseUid, guestUser));
+      print('🟢 emit 후 state.uuid: ${state.uuid}');
+      print('🟢 emit 후 state.isGuest: ${state.isGuest}');
     } catch (e) {
       emit(state.copyWith(
         type: AuthType.initial,
@@ -92,15 +94,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onLoginWithGoogle(
       LoginWithGoogle event,
       Emitter<AuthState> emit,
-      ) async {
+      )
+  async {
+    final previousGuestUid = state.isGuest ? state.uuid : null;
+
+    // print('🔍 [Bloc] state.isGuest: ${state.isGuest}');
+    // print('🔍 [Bloc] state.uuid: ${state.uuid}');
+    print('🔍 [Bloc] previousGuestUid: $previousGuestUid');
+
     emit(AuthState.loading());
 
     try {
       // 현재 비회원 UUID 저장 (있다면)
-      final previousGuestUid = state.isGuest ? state.uuid : null;
+      print('🔍 [Bloc] state.isGuest: ${state.isGuest}');
+      print('🔍 [Bloc] state.uuid: ${state.uuid}');
+      // print('🔍 [Bloc] previousGuestUid: $previousGuestUid');
 
-      // 소셜 로그인 실행
-      final userCredential = await _authRepository.signInWithGoogle();
+      // 소셜 로그인 실행 & 비회원 uuid전달
+      final userCredential = await _authRepository.signInWithGoogle(
+        previousGuestUid: previousGuestUid,
+      );
 
       if (userCredential?.user == null) {
         throw Exception('소셜 로그인 실패');
@@ -112,12 +125,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Firestore에서 기존 데이터 확인
       final existingData = await _authRepository.getUserData(firebaseUid);
 
-      app_user.User socialUser;
+      late app_user.User socialUser;
 
       if (existingData != null) {
         // 이미 가입된 소셜 계정
         socialUser = app_user.User.fromJson(existingData);
-      } else {
+      } else if(previousGuestUid != null && previousGuestUid !=firebaseUid) {
+        print('🔄 비회원 → 소셜 전환 시작');
+        final guestData = await _authRepository.getUserData(previousGuestUid);
+        if (guestData != null) {
+          // 비회원 데이터를 소셜 계정으로 변환
+          socialUser = app_user.User.fromJson({
+            ...guestData,
+            'uuid': firebaseUid,
+            'provider': 'google',
+            'name': firebaseUser.displayName ?? guestData['name'],
+            'email': firebaseUser.email ?? guestData['email'],
+          });
+        }
+      }
+      else {
         // 신규 소셜 계정
         socialUser = app_user.User.social(
           uuid: firebaseUid,
@@ -129,15 +156,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         // Firestore에 저장
         await _authRepository.updateUserData(firebaseUid, socialUser.toJson());
       }
-
-      // 비회원에서 전환된 경우 데이터 마이그레이션
-      if (previousGuestUid != null && previousGuestUid != firebaseUid) {
-        await _authRepository.migrateGuestData(
-          guestUid: previousGuestUid,
-          socialUid: firebaseUid,
-        );
-      }
-
       emit(AuthState.social(uuid: firebaseUid, user: socialUser));
     } catch (e) {
       print('LoginWithSocial error: $e');

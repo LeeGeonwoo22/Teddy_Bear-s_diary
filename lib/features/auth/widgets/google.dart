@@ -5,7 +5,7 @@ import '../../../core/common/global.dart';
 
 // Google Sign-In Service Class
 class GoogleSignInService {
-  static final FirebaseAuth _auth = FirebaseAuth.instance;
+  // static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   static bool isInitialize = false;
   static Future<void> initSignIn() async {

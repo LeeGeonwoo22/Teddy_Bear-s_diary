@@ -14,6 +14,7 @@ import 'features/auth/bloc/auth_event.dart';
 import 'features/auth/repository/AuthRepository.dart';
 import 'features/chat/bloc/chat_bloc.dart';
 import 'features/diary/bloc/diary_bloc.dart';
+import 'features/diary/bloc/diary_event.dart';
 import 'features/diary/repository/diaryRepository.dart';
 import 'firebase_options.dart';
 
@@ -50,7 +51,7 @@ void main() async{
         ),
         BlocProvider<DiaryBloc>(
           create: (_) => DiaryBloc(
-            InjectorSetup.injector<DiaryRepository>(),
+            InjectorSetup.injector<DiaryRepository>())..add(const LoadDiaries(),
           ),
         ),
       ],

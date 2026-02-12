@@ -1,9 +1,9 @@
-// features/settings/repository/settingRepository.dart
+// features/settings/repository/SettingRepository.dart
 
 import 'package:hive_ce/hive.dart';
 import '../../../data/model/settings.dart';
 
-class Settingrepository {
+class SettingRepository {
   static const String _boxName = 'settings';
   static const String _key = 'app_settings';
   static Box<Settings>? _box;
