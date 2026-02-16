@@ -23,7 +23,7 @@ class SettingDialog {
         ],
       ),
     );
-
+                                      
     return confirmed ?? false; // ✅ 결과 반환
   }
 
