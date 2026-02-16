@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:teddyBear/core/common/dialogueController.dart';
 import 'package:teddyBear/features/diary/widgets/diaryCalendar.dart';
+import '../../core/widgets/dialogBox.dart';
+import '../../core/widgets/teddyCharacter.dart';
 import 'bloc/diary_bloc.dart';
 import 'bloc/diary_event.dart';
 import 'bloc/diary_state.dart';
 
 class DiaryPage extends StatefulWidget {
-  const DiaryPage({super.key});  // ✅ diary, onClose 파라미터 제거 (안 쓰니까)
+  const DiaryPage({super.key});
 
   @override
   State<DiaryPage> createState() => _DiaryPageState();
@@ -17,17 +20,12 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-
-  int _currentDialogueIndex = 0;
-  String _displayedText = '';
-  bool _isTyping = false;
-  Timer? _typingTimer;
-  int _charIndex = 0;
-  List<String> _dialogues = [];
+  late DialogueController _dialogueController;
 
   @override
   void initState() {
     super.initState();
+
 
     // 앱 시작 시 전체 일기 불러오기
     context.read<DiaryBloc>().add(const LoadDiaries());
@@ -47,108 +45,68 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
     _controller.forward();
 
     // 초기 대사
-    _dialogues = ["어느 일기를 같이 읽어볼까? 🧸"];
-    _startTyping();
+
+    _dialogueController = DialogueController();
+
+
+    _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
+
   }
 
   @override
   void dispose() {
-    _typingTimer?.cancel();
+
+    _dialogueController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
+  void _handleDialogueEnd() {
+
+    _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
+  }
+
   // 날짜 클릭 핸들러
   void _handleDaySelected(DateTime selectedDay) {
+    // print("📅 날짜 선택: ${selectedDay.year}-${selectedDay.month}-${selectedDay.day}");
     context.read<DiaryBloc>().add(SelectDiary(selectedDay));
-  }
-
-  // 타이핑 효과 시작
-  void _startTyping() {
-    _typingTimer?.cancel();
-    setState(() {
-      _isTyping = true;
-      _displayedText = '';
-      _charIndex = 0;
-    });
-
-    final currentText = _dialogues[_currentDialogueIndex];
-
-    _typingTimer = Timer.periodic(const Duration(milliseconds: 80), (timer) {
-      if (_charIndex < currentText.length) {
-        setState(() {
-          _displayedText = currentText.substring(0, _charIndex + 1);
-          _charIndex++;
-        });
-      } else {
-        timer.cancel();
-        setState(() {
-          _isTyping = false;
-        });
-      }
-    });
-  }
-
-  void _nextDialogue() {
-    if (_isTyping) {
-      _typingTimer?.cancel();
-      setState(() {
-        _displayedText = _dialogues[_currentDialogueIndex];
-        _isTyping = false;
-      });
-      return;
-    }
-
-    if (_currentDialogueIndex >= _dialogues.length - 1) {
-      _close();
-      return;
-    }
-
-    setState(() {
-      _currentDialogueIndex++;
-    });
-    _startTyping();
-  }
-
-  void _close() {
-    setState(() {
-      _dialogues = ["어느 일기를 같이 읽어볼까? 🧸"];
-      _currentDialogueIndex = 0;
-      _displayedText = "";
-    });
-    _startTyping();
   }
 
   @override
   Widget build(BuildContext context) {
+
+
     return BlocListener<DiaryBloc, DiaryState>(
       listener: (context, state) {
+
+
         // 날짜 선택 시 대사 업데이트
         if (state.selectedDate != null) {
-          _typingTimer?.cancel();
+         // print("📆 선택된 날짜: ${state.selectedDate}");
 
-          setState(() {
-            _currentDialogueIndex = 0;
-            _charIndex = 0;
-            _displayedText = '';
-            final diary = state.diaries[state.selectedDate];
-            if (diary != null) {
+          final diary = state.diaries[state.selectedDate];
+          List<String> newDialogues;
 
-              _dialogues = [
-                '${state.selectedDate!.month}월 ${state.selectedDate!.day}일 일기를 읽어줄게',
-                diary.title,
-                ...diary.content.split('\n\n'),
-                '오늘 하루 수고했어 💛',
-              ];
-            } else {
-              _dialogues = ['이 날은 기록된 이야기가 없네.. 🧸'];
-            }
-          });
+          if (diary != null) {
+           // print("📖 일기 발견: ${diary.title}");
+            newDialogues = [
+              '${state.selectedDate!.month}월 ${state.selectedDate!.day}일 일기를 읽어줄게',
+              diary.title,
+              ...diary.content.split('\n\n'),
+              '오늘 하루 수고했어 💛',
+            ];
+          } else {
+            //print("📭 일기 없음");
+            newDialogues = ['이 날은 기록된 이야기가 없네.. 🧸'];
+          }
 
+          _dialogueController.setDialogues(newDialogues);
           _controller.forward(from: 0.0);
-          _startTyping();
+        } else {
+          // print("⚠️ selectedDate가 null");
         }
       },
+
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
@@ -163,7 +121,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
             IconButton(
               icon: const Icon(Icons.settings_outlined, color: Color(0xFF8B6F47)),
               onPressed: () {
-                // 설정 페이지로 이동
+
               },
             ),
           ],
@@ -185,21 +143,25 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
                 flex: 2,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: GestureDetector(
-                    onTap: _nextDialogue,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Column(
-                        children: [
-                          const Spacer(flex: 1),
-                          SlideTransition(
-                            position: _slideAnimation,
-                            child: _buildTeddyCharacter(),
-                          ),
-                          const SizedBox(height: 20),
-                          _buildDialogueBox(),
-                        ],
-                      ),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Column(
+                      children: [
+                        const Spacer(flex: 1),
+                        SlideTransition(
+                          position: _slideAnimation,
+                          child: TeddyCharacter(),
+                        ),
+                        const SizedBox(height: 20),
+                        Builder(
+                            builder: (context) {
+                              return DialogueBox(
+                                controller: _dialogueController,
+                                onDialogueEnd: _handleDialogueEnd,
+                              );
+                            }
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -207,124 +169,6 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTeddyCharacter() {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 800),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, -5 * (1 - value)),
-          child: Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE4C4),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: const Center(
-              child: Text('🧸', style: TextStyle(fontSize: 48)),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDialogueBox() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFEF0),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF8B6F47), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8B6F47),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  '곰돌이',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 80,
-            child: SingleChildScrollView(
-              child: Text(
-                _displayedText + (_isTyping ? '▂' : ''),
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.6,
-                  color: Color(0xFF5D4E37),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${_currentDialogueIndex + 1}/${_dialogues.length}',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-              ),
-              if (!_isTyping)
-                Row(
-                  children: [
-                    Text(
-                      _currentDialogueIndex >= _dialogues.length - 1 ? '닫기' : '다음',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF8B6F47),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 12,
-                      color: Color(0xFF8B6F47),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ],
       ),
     );
   }

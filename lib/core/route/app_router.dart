@@ -34,7 +34,7 @@ class AppRouter {
           ),
           GoRoute(
             path: '/toTeddy',
-            builder: (context, state) => Toteddy(),
+            builder: (context, state) => AnotherPage(),
           ),
           GoRoute(
             path: '/settings',
