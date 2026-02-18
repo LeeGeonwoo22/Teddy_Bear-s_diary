@@ -20,7 +20,8 @@ class _AnotherPageState extends State<AnotherPage> {
     _dialogueController.setDialogues([
       "안녕! 나는 곰돌이야 🧸",
       "오늘 기분이 어때?",
-      "같이 이야기해볼까?"
+      "같이 이야기해볼까?",
+      "여기서는 너가 너의 감정을 바탕으로 다른 무언가를 할 수가 있어"
     ]);
 
 
@@ -37,13 +38,18 @@ class _AnotherPageState extends State<AnotherPage> {
     return Scaffold(
       body: Column(
         children: [
+          Spacer(),
           const TeddyCharacter(size: 100),
-          DialogueBox(
-            controller: _dialogueController,
-            characterName: '테디',
-            onDialogueEnd: () {
-              // 대화 종료 후 처리
-            },
+          SizedBox(height: 20,),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: DialogueBox(
+              controller: _dialogueController,
+              characterName: '테디',
+              onDialogueEnd: () {
+                // 대화 종료 후 처리
+              },
+            ),
           ),
         ],
       ),
