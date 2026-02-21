@@ -62,7 +62,10 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
     emit(state.copyWith(isGenerating: true));
 
     try {
-      final diary = await _repository.createTodayDiary();
+      final diary = await _repository.createTodayDiary(
+        diaryLength: event.diaryLength,
+        diaryCreationHour: event.diaryCreationHour,
+      );
 
       if (diary == null) {
         emit(state.copyWith(

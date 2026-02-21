@@ -33,7 +33,12 @@ class DiaryRepository {
   }
 
   // 일기 생성
-  Future<Diary?> createTodayDiary() async {
+  Future<Diary?> createTodayDiary({
+      required int diaryLength,
+      required int diaryCreationHour,
+    })
+  async {
+
     try {
       final uid = _uid;
       final today = DateFormatter.normalizeDate(DateTime.now());
@@ -53,23 +58,25 @@ class DiaryRepository {
       }
 
       // 오늘 대화 가져오기
+// 오늘 대화 가져오기
       final todayMessages = await chatRepository.getTodayMessages();
+
+// ✅ 체크 먼저
       if (todayMessages.length < 20) {
         print('⚠️ 곰돌이에게 오늘 이야기를 더 해주세요');
         return null;
       }
 
-      // final todayMessages = await chatRepository.getTodayUserMessages();
-      //
-      // if (todayMessages.length < 2 {
-      //   return null;
-      // }
-
-
       print('✅ 오늘 대화 ${todayMessages.length}개 불러옴');
 
       // AI로 일기 생성
-      final content = await remote.generateDiary(todayMessages);
+      final content = await remote.generateDiary(
+        todayMessages,
+        diaryLength: diaryLength,
+      );
+      print('✅ 오늘 대화 ${todayMessages.length}개 불러옴');
+
+
 
       // Diary 객체 생성
       final diary = Diary(

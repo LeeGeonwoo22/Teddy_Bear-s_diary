@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:teddyBear/core/common/dialogueController.dart';
 import 'package:teddyBear/features/diary/widgets/diaryCalendar.dart';
+import 'package:teddyBear/features/diary/widgets/emojiBottomSheet.dart';
 import '../../core/widgets/dialogBox.dart';
 import '../../core/widgets/teddyCharacter.dart';
 import 'bloc/diary_bloc.dart';
@@ -45,48 +46,46 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
     _controller.forward();
 
     // 초기 대사
-
     _dialogueController = DialogueController();
-
-
     _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
-
   }
 
   @override
   void dispose() {
-
     _dialogueController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   void _handleDialogueEnd() {
-
     _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
+    final state = context.read<DiaryBloc>().state;
+
+    if (state.selectedDate != null) {
+      _showFeedbackBottomSheet(state.selectedDate!);
+    }
   }
 
   // 날짜 클릭 핸들러
   void _handleDaySelected(DateTime selectedDay) {
-    // print("📅 날짜 선택: ${selectedDay.year}-${selectedDay.month}-${selectedDay.day}");
     context.read<DiaryBloc>().add(SelectDiary(selectedDay));
   }
 
+  void _showFeedbackBottomSheet(DateTime date) {
+    showModalBottomSheet(context: context, builder: (context) => EmojiBottomsheet(
+      // date : date,
+
+    ));
+  }
   @override
   Widget build(BuildContext context) {
-
-
     return BlocListener<DiaryBloc, DiaryState>(
       listener: (context, state) {
-
-
         // 날짜 선택 시 대사 업데이트
         if (state.selectedDate != null) {
          // print("📆 선택된 날짜: ${state.selectedDate}");
-
           final diary = state.diaries[state.selectedDate];
           List<String> newDialogues;
-
           if (diary != null) {
            // print("📖 일기 발견: ${diary.title}");
             newDialogues = [
@@ -99,7 +98,6 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
             //print("📭 일기 없음");
             newDialogues = ['이 날은 기록된 이야기가 없네.. 🧸'];
           }
-
           _dialogueController.setDialogues(newDialogues);
           _controller.forward(from: 0.0);
         } else {

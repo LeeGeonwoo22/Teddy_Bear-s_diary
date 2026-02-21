@@ -22,17 +22,20 @@ class SelectDiary extends DiaryEvent {
 }
 
 class GenerateDiary extends DiaryEvent {
-  final DateTime date;   // 선택된 날짜
-  // final String journal;  // AI + 사용자 대화 결과
+  final DateTime date;
+  final int diaryLength;
+  final int diaryCreationHour;
 
   const GenerateDiary({
     required this.date,
-
+    required this.diaryLength,
+    required this.diaryCreationHour,
   });
 
   @override
-  List<Object> get props => [date];
+  List<Object> get props => [date, diaryLength, diaryCreationHour];
 }
+
 
 class ClearError extends DiaryEvent {
   const ClearError();

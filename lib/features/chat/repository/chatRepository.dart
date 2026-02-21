@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/common/encryption_service.dart';
 import '../../../data/local/chatDataSource.dart';
 import '../../../data/model/message.dart';
 import '../../auth/repository/AuthRepository.dart';
 import '../../../core/common/aIService.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ChatRepository {
   final AIService remote;
@@ -18,21 +22,20 @@ class ChatRepository {
     required this.authRepository,
   });
 
-  String get _uid {
-    final user = authRepository.getCurrentUser();
-    if (user == null) {
-      throw Exception('Not authenticated');
-    }
-    return user.uid;
+  String? get _uid {
+    return authRepository.getCurrentUser()?.uid;
   }
 
   /// 메시지 불러오기
   Future<List<Message>> loadMessages({int? limit = 50}) async {
     try {
-      final uid = _uid;
-      // final targetMessageId = messageId ?? _currentMessageId;
-
       print('📥 메시지 불러오는 중: $int');
+      final uid = _uid;
+      if (uid == null) {
+        print('⚠️ 로그인 전 - 메시지 로드 스킵');
+        return [];
+      }
+
       // 개별 문서 쿼리
       final snapshot = await db
           .collection('users')
@@ -85,24 +88,12 @@ class ChatRepository {
       print('✅ Firestore에서 ${messages.length}개 메시지 불러옴 (복호화 완료)');
 
       // 로컬 캐시 업데이트
-      await local.clearAllMessages();
-      for (var message in messages) {
-        await local.saveMessage(message);
-      }
+      await _updateLocalCache(messages);
       return messages;
     } catch (e, stackTrace) {
       print('❌ Firestore 실패: $e');
       print('위치: $stackTrace'); // ← 어디서 에러났는지 확인
-      // 로컬 캐시에서 복구
-      try{
-        final cachedMessages = await local.getMessages();
-        print('⚠️ 로컬 캐시: ${cachedMessages.length}개');
-        return cachedMessages;
-      }catch(e2){
-        print('❌ 로컬 캐시도 실패: $e2');
-        return [];
-      }
-
+      return await _loadFromLocalCache();
     }
   }
 
@@ -112,7 +103,9 @@ class ChatRepository {
     try{
       // 🔐 암호화 초기화
       final uid = _uid;
-
+      if (uid == null) {
+        throw Exception('로그인이 필요합니다');  // send는 조용히 넘기면 안되니까
+      }
       // 사용자 메세지 생성
       final userMessage =
       Message(msg: userMsg, msgType: MessageType.user);
@@ -167,6 +160,9 @@ class ChatRepository {
   Future<void> deleteAllMessages() async {
     try {
       final uid = _uid;
+      if (uid == null) {
+        throw Exception('로그인이 필요합니다');  // send는 조용히 넘기면 안되니까
+      }
       final batch = db.batch();
 
       // Firestore의 모든 메시지 문서 조회
@@ -182,8 +178,8 @@ class ChatRepository {
       }
 
       await batch.commit();
-      await local.clearAllMessages();
-
+      // await local.clearAllMessages();
+      await _updateLocalCache([]);
       print('🗑️ 모든 메시지 삭제 완료');
 
     } catch (e) {
@@ -205,34 +201,27 @@ class ChatRepository {
         .toList();
   }
 
+  Future<void> exportAllChatsToTxt() async {
+    final messages = await loadMessages(limit: 10000);
+    final buffer = StringBuffer();
+
+    for (final message in messages) {
+      final who = message.msgType == MessageType.user ? '나' : '곰돌이';
+      buffer.writeln('[${message.timestamp}] $who: ${message.msg}');
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/chat_backup.txt');
+    await file.writeAsString(buffer.toString());
+
+    // ✅ 공유 시트 띄우기
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      subject: '곰돌이 대화 백업',
+    );
+  }
+
   // ========== 헬퍼 메서드 ==========
-
-  /// Timestamp 안전하게 파싱
-  DateTime _parseTimestamp(dynamic timestamp) {
-    if (timestamp is Timestamp) {
-      return timestamp.toDate();
-    } else if (timestamp is String) {
-      return DateTime.tryParse(timestamp) ?? DateTime.now();
-    } else {
-      return DateTime.now();
-    }
-  }
-
-  /// MessageType 안전하게 파싱
-  MessageType _parseMessageType(dynamic type) {
-    if (type == null) return MessageType.user;
-
-    final typeStr = type.toString().toLowerCase();
-
-    switch (typeStr) {
-      case 'bot':
-        return MessageType.bot;
-      case 'user':
-        return MessageType.user;
-      default:
-        return MessageType.user;
-    }
-  }
 
   /// 로컬 캐시 업데이트
   Future<void> _updateLocalCache(List<Message> messages) async {
