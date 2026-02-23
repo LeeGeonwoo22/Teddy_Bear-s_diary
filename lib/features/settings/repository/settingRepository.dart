@@ -9,20 +9,6 @@ class SettingRepository {
 
   // 🔹 생성자에서 box 주입 (권장 방식)
   SettingRepository(this._box);
-
-  // 🔹 초기 설정 생성
-  //  Future<SettingRepository> init() async {
-    // final box = await Hive.openBox<Settings>(_boxName);
-
-    // if (!box.containsKey(_key)) {
-    //   final defaultSettings = Settings();
-    //   await box.put(_key, defaultSettings);
-    //   print('✅ 기본 설정 생성');
-    // }
-    //
-    // return SettingRepository(box);
-  // }
-
   // ✅ 설정 가져오기 (null 없음)
   Settings loadSettings() {
     return _box.get(_key)!;

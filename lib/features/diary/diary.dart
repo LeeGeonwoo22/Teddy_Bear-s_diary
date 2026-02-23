@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:teddyBear/core/common/dialogueController.dart';
@@ -58,12 +57,55 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
   }
 
   void _handleDialogueEnd() {
-    _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
-    final state = context.read<DiaryBloc>().state;
 
-    if (state.selectedDate != null) {
-      _showFeedbackBottomSheet(state.selectedDate!);
-    }
+    final state = context.read<DiaryBloc>().state;
+    final diary = state.diaries[state.selectedDate];
+
+    // if (diary != null) {
+    //   _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
+    //   return ;
+    // }
+    // _showEmotionAskDialog(state.selectedDate!);
+    if (state.selectedDate == null) return;
+    // ✅ 일기 유무 상관없이 바로 띄움
+    _showEmotionAskDialog(state.selectedDate!);
+  }
+
+  void _showEmotionAskDialog(DateTime date) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('🧸', style: TextStyle(fontSize: 40)),
+            SizedBox(height: 12),
+            Text('오늘 일기 어땠어?\n이모지 남겨볼래?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // 아니오 → 초기 대사로
+              _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
+            },
+            child: Text('아니야'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // 예 → 이모지 선택
+              _showEmotionPicker(date);
+            },
+            child: Text('응!'),
+          ),
+        ],
+      ),
+    );
   }
 
   // 날짜 클릭 핸들러
@@ -71,12 +113,43 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
     context.read<DiaryBloc>().add(SelectDiary(selectedDay));
   }
 
-  void _showFeedbackBottomSheet(DateTime date) {
-    showModalBottomSheet(context: context, builder: (context) => EmojiBottomsheet(
-      // date : date,
+  void _showEmotionPicker(DateTime date) {
+    final emotions = [
+      {'emoji': '😊', 'label': '응, 괜찮아'},
+      {'emoji': '😢', 'label': '아니야.. 슬퍼'},
+      {'emoji': '😤', 'label': '음.. 답답해'},
+      {'emoji': '🤔', 'label': '잘 모르겠어'},
+      {'emoji': '😴', 'label': '그냥 그래'},
+    ];
 
-    ));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('오늘 기분은?', textAlign: TextAlign.center),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: emotions.map((e) =>
+              ListTile(
+                leading: Text(e['emoji']!, style: TextStyle(fontSize: 24)),
+                title: Text(e['label']!),
+                onTap: () {
+                  context.read<DiaryBloc>().add(
+                    UpdateEmotion(
+                      date: date,
+                      emotion: e['emoji']!,
+                    ),
+                  );
+                  Navigator.pop(context);
+                  // 선택 후 초기 대사로
+                  _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
+                },
+              ),
+          ).toList(),
+        ),
+      ),
+    );
   }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<DiaryBloc, DiaryState>(
@@ -129,7 +202,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
             children: [
               // 달력 영역
               Flexible(
-                flex: 2,
+                flex: 0,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                   child: DiaryCalendar(onDaySelected: _handleDaySelected),
@@ -137,8 +210,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
               ),
 
               // 대화창 영역
-              Flexible(
-                flex: 2,
+              Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: FadeTransition(
@@ -150,7 +222,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
                           position: _slideAnimation,
                           child: TeddyCharacter(),
                         ),
-                        const SizedBox(height: 20),
+                        const Spacer(),
                         Builder(
                             builder: (context) {
                               return DialogueBox(

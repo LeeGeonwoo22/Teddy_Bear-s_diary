@@ -8,6 +8,7 @@ abstract class AuthRepository {
   Future<UserCredential?> guestLogin();
   Future<UserCredential?> signInWithGoogle({String? previousGuestUid});
   Future<void> signOut();
+  Future<void> deleteAccount();
   User? getCurrentUser();
   Future<Map<String, dynamic>?> getUserData(String uid);
   Future<void> updateUserData(String uid, Map<String, dynamic> data);
@@ -97,6 +98,10 @@ class FirebaseAuthRepository implements AuthRepository {
             'isGuest': false,
             'upgradedAt': FieldValue.serverTimestamp(),
           });
+          await migrateGuestData(
+            guestUid: previousGuestUid,
+            socialUid: firebaseUser.uid,
+          );
 
           print('✅ 비회원 문서 업데이트 완료: $previousGuestUid');
           print('🟢 [AuthRepo] signInWithGoogle 정상 종료 (전환)');
@@ -222,36 +227,97 @@ class FirebaseAuthRepository implements AuthRepository {
     required String guestUid,
     required String socialUid,
   }) async {
-    try {
-      // 비회원 채팅 데이터 마이그레이션 예시
-      final guestChatsQuery = await db
-          .collection('chats')
-          .where('userId', isEqualTo: guestUid)
-          .get();
+    try{
+      await _migrateCollection(
+      guestUid: guestUid,
+      socialUid: socialUid,
+      collectionName: 'messages',
+      );
+      await _migrateCollection(
+        guestUid: guestUid,
+        socialUid: socialUid,
+        collectionName: 'diaries',
+      );
 
-      // Batch로 일괄 처리
-      final batch = db.batch();
-
-      for (var doc in guestChatsQuery.docs) {
-        // 새 문서 생성 (소셜 계정으로)
-        final newDocRef = db.collection('chats').doc();
-        batch.set(newDocRef, {
-          ...doc.data(),
-          'userId': socialUid,
-          'migratedFrom': guestUid,
-          'migratedAt': FieldValue.serverTimestamp(),
-        });
-
-        // 기존 비회원 데이터는 삭제 (선택사항)
-        batch.delete(doc.reference);
+      // ✅ uid가 다를 때만 게스트 문서 삭제
+      if (guestUid != socialUid) {
+        await db.collection('users').doc(guestUid).delete();
+        print('🗑️ 게스트 문서 삭제 완료: $guestUid');
       }
 
-      await batch.commit();
-
-      print('✅ 비회원 데이터 마이그레이션 완료: $guestUid -> $socialUid');
-    } catch (e) {
-      print('migrateGuestData error: $e');
-      // 마이그레이션 실패해도 로그인은 계속 진행
+      print('✅ 전체 마이그레이션 완료: $guestUid → $socialUid');
+    }catch(e){
+      print('❌ migrateGuestData 실패: $e');
+      rethrow;
     }
+  }
+
+  // 컬렉션 단위 마이그레이션 헬퍼
+  Future<void> _migrateCollection({
+    required String guestUid,
+    required String socialUid,
+    required String collectionName,
+  }) async {
+    final snapshot = await db
+        .collection('users').doc(guestUid)
+        .collection(collectionName).get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = db.batch();
+    for (var doc in snapshot.docs) {
+      final newRef = db
+          .collection('users').doc(socialUid)
+          .collection(collectionName).doc(doc.id);
+      batch.set(newRef, doc.data());
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+    print('✅ $collectionName 마이그레이션 완료 (${snapshot.docs.length}개)');
+  }
+
+  // FirebaseAuthRepository 구현
+  @override
+  Future<void> deleteAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('로그인 상태가 아닙니다');
+
+      final uid = user.uid;
+
+      // 하위 컬렉션 삭제
+      await _deleteCollection(uid: uid, collectionName: 'messages');
+      await _deleteCollection(uid: uid, collectionName: 'diaries');
+      // Firestore 사용자 데이터 삭제
+      await db.collection('users').doc(user.uid).delete();
+
+      // Firebase Auth 계정 삭제
+      await user.delete();
+      // 구글 로그아웃
+      await _googleSignIn.signOut();
+
+      print('✅ 계정 삭제 완료');
+    } catch (e) {
+      print('❌ deleteAccount 실패: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _deleteCollection({
+    required String uid,
+    required String collectionName
+}) async {
+    final snapshot = await db
+        .collection('users').doc(uid)
+        .collection(collectionName).get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = db.batch();
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+    print('🗑️ $collectionName 삭제 완료');
   }
 }

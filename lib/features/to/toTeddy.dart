@@ -45,7 +45,7 @@ class _AnotherPageState extends State<AnotherPage> {
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: DialogueBox(
               controller: _dialogueController,
-              characterName: '테디',
+              characterName: '곰돌이',
               onDialogueEnd: () {
                 // 대화 종료 후 처리
               },

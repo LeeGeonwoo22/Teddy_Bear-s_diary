@@ -36,7 +36,5 @@ class ChangeThemeMode extends SettingEvent {
 }
 
 class ExportAllChatsToTxt extends SettingEvent {}
-// class UpdateLastBackupDate extends SettingEvent {
-//   final DateTime date;
-//   const UpdateLastBackupDate(this.date);
-// }
+
+

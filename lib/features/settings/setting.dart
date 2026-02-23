@@ -33,13 +33,6 @@ class SettingsPage extends StatelessWidget {
 
             final isGuest = authState.isGuest;
 
-            String _formatHour(int value) {
-              final hour = value ~/ 100;
-              final minute = value % 100;
-              if (minute == 0) return '$hour시';
-              return '$hour시 $minute분';
-            }
-
             return Scaffold(
               appBar: AppBar(title: const Text('⚙️ 설정')),
               body: ListView(
@@ -69,9 +62,6 @@ class SettingsPage extends StatelessWidget {
                     onTap: () {
                       print('클릭');
                       SettingPicker.showLengthPicker(context: context);
-                      // context.read<SettingBloc>().add(
-                      //   ChangeDiaryLength(state.diaryLength),
-                      // );
                     },
                   ),
 
@@ -169,18 +159,18 @@ class SettingsPage extends StatelessWidget {
                         context.read<AuthBloc>().add(LoginWithGoogle());
                       },
                     ),
-
-                  ListTile(
-                    leading: const Icon(Icons.logout, color: Colors.grey),
-                    title: const Text('로그아웃'),
-                    onTap: () => SettingDialog.showLogoutDialog(context: context),
-                  ),
-
-                  ListTile(
-                    leading: const Icon(Icons.person_remove, color: Colors.red),
-                    title: const Text('회원 탈퇴'),
-                    onTap: () => SettingDialog.showDeleteAccountDialog(context: context),
-                  ),
+                  if (!isGuest) ...[
+                    ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.grey),
+                      title: const Text('로그아웃'),
+                      onTap: () => SettingDialog.showLogoutDialog(context: context),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.person_remove, color: Colors.red),
+                      title: const Text('회원 탈퇴'),
+                      onTap: () => SettingDialog.showDeleteAccountDialog(context: context),
+                    ),
+                  ],
 
                   const SizedBox(height: 24),
 

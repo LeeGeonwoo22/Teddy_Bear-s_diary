@@ -55,6 +55,7 @@ class _DiaryCalendarState extends State<DiaryCalendar> {
               return state.diaries.containsKey(normalizedDay) ? ['●'] : [];
             },
 
+
             // 3. 날짜 클릭 시 동작 (핵심 수정!)
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
@@ -63,7 +64,19 @@ class _DiaryCalendarState extends State<DiaryCalendar> {
               });
               widget.onDaySelected(selectedDay);
             },
-
+            // 달력에 이모지 띄우기
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, date, events) {
+                final normalizedDay = DateTime(date.year, date.month, date.day);
+                final diary = state.diaries[normalizedDay];
+                if (diary?.emotion != null && diary!.emotion!.isNotEmpty) {
+                  return Text(diary.emotion!, style: TextStyle(fontSize: 14));
+                }
+                return events.isNotEmpty
+                    ? Text('●', style: TextStyle(fontSize: 8, color: Color(0xFF5D4037)))
+                    : null;
+              },
+            ),
             // 디자인 스타일 설정
             calendarStyle: const CalendarStyle(
               todayDecoration: BoxDecoration(

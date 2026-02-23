@@ -37,10 +37,23 @@ class GenerateDiary extends DiaryEvent {
 }
 
 
-class ClearError extends DiaryEvent {
-  const ClearError();
+class DeleteAllDiaries extends DiaryEvent {
+  const DeleteAllDiaries();
 }
 
 class RefreshDiaries extends DiaryEvent {
   const RefreshDiaries();
+}
+
+class UpdateEmotion extends DiaryEvent {
+  final DateTime date;
+  final String emotion;
+
+  const UpdateEmotion({
+    required this.date,
+    required this.emotion,
+  });
+
+  @override
+  List<Object> get props => [date, emotion];
 }
