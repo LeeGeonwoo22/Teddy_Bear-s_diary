@@ -32,92 +32,119 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<UserCredential?> signInWithGoogle({String? previousGuestUid}) async {
-    print('🟡 [AuthRepo] signInWithGoogle 시작');
-    print('🟡 [Repo] 받은 previousGuestUid: $previousGuestUid');
-
     try {
-      // 1️⃣ 구글 로그인 인증 과정
+      // 1️⃣ 구글 로그인 전에 비회원 데이터 미리 읽기
+      Map<String, dynamic>? guestData;
+      List<QueryDocumentSnapshot>? guestMessages;
+      List<QueryDocumentSnapshot>? guestDiaries;
+
+      if (previousGuestUid != null) {
+        print('📦 비회원 데이터 미리 읽는 중...');
+        final guestDoc = await db.collection('users').doc(previousGuestUid).get();
+        guestData = guestDoc.data();
+
+        if (guestData != null && guestData['isGuest'] == true) {
+          // 서브컬렉션도 미리 읽기
+          final messagesSnap = await db
+              .collection('users').doc(previousGuestUid)
+              .collection('messages').get();
+          final diariesSnap = await db
+              .collection('users').doc(previousGuestUid)
+              .collection('diaries').get();
+
+          guestMessages = messagesSnap.docs;
+          guestDiaries = diariesSnap.docs;
+          print('📦 비회원 데이터 읽기 완료: messages ${guestMessages.length}개, diaries ${guestDiaries.length}개');
+        }
+      }
+
+      // 2️⃣ 구글 로그인 (여기서 uid 바뀜)
       await initSignIn();
       final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
-      print('✅ googleUser: ${googleUser.email}');
-
       final googleAuth = await googleUser.authentication;
-      print('   idToken: ${googleAuth.idToken != null}');
-
       final authorizationClient = googleUser.authorizationClient;
       GoogleSignInClientAuthorization? authorization =
       await authorizationClient.authorizationForScopes(['email', 'profile']);
 
-      // accessToken 재시도 로직
       if (authorization?.accessToken == null) {
-        print('⚠️ accessToken null → 재시도');
         authorization = await authorizationClient.authorizationForScopes(['email', 'profile']);
-
         if (authorization?.accessToken == null) {
-          throw FirebaseAuthException(
-            code: "no-access-token",
-            message: "Failed to get access token",
-          );
+          throw FirebaseAuthException(code: "no-access-token", message: "Failed to get access token");
         }
       }
 
-      // 2️⃣ Firebase 인증
       final credential = GoogleAuthProvider.credential(
         accessToken: authorization!.accessToken,
         idToken: googleAuth.idToken,
       );
 
       final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      final firebaseUser = userCredential.user;
+      final firebaseUser = userCredential.user!;
+      final socialUid = firebaseUser.uid;
 
-      if (firebaseUser == null) {
-        throw Exception('Firebase user is null');
-      }
+      print('✅ Firebase user uid: $socialUid');
 
-      print('✅ Firebase user uid: ${firebaseUser.uid}');
-      print('   providerData: ${firebaseUser.providerData.map((e) => e.providerId)}');
+      // 3️⃣ 비회원 → 구글 전환 처리 (이미 읽어둔 데이터로)
+      if (previousGuestUid != null && guestData != null && guestData['isGuest'] == true) {
+        print('🔄 Guest → Google 전환');
 
-      // 3️⃣ 비회원 → 구글 전환 처리
-      if (previousGuestUid != null) {
-        final guestDoc = db.collection('users').doc(previousGuestUid);
-        final guestSnapshot = await guestDoc.get();
-        final guestData = guestSnapshot.data();
+        final batch = db.batch();
 
-        print('📄 비회원 문서 존재: ${guestSnapshot.exists}');
-        print('📄 비회원 문서 ID: $previousGuestUid');
-        print('📄 비회원 데이터: $guestData');
+        // 비회원 users 문서 → 구글 uid로 저장
+        final socialDocRef = db.collection('users').doc(socialUid);
+        final socialDocSnap = await socialDocRef.get();
 
-        if (guestData != null && guestData['isGuest'] == true) {
-          print('🔄 Guest → Google 전환');
-
-          // 👇 비회원 문서를 그대로 업데이트
-          await guestDoc.update({
-            'name': firebaseUser.displayName ?? guestData['name'] ?? '',
-            'email': firebaseUser.email ?? guestData['email'] ?? '',
+        if (!socialDocSnap.exists) {
+          batch.set(socialDocRef, {
+            'uuid': socialUid,
+            'firebaseUid': socialUid,
+            'name': firebaseUser.displayName ?? '',
+            'email': firebaseUser.email ?? '',
             'provider': 'google',
             'isGuest': false,
             'upgradedAt': FieldValue.serverTimestamp(),
           });
-          await migrateGuestData(
-            guestUid: previousGuestUid,
-            socialUid: firebaseUser.uid,
-          );
-
-          print('✅ 비회원 문서 업데이트 완료: $previousGuestUid');
-          print('🟢 [AuthRepo] signInWithGoogle 정상 종료 (전환)');
-          return userCredential;
         }
+
+        // messages 마이그레이션
+        for (var doc in guestMessages ?? []) {
+          final newRef = db.collection('users').doc(socialUid)
+              .collection('messages').doc(doc.id);
+          final existing = await newRef.get();
+          if (!existing.exists) {
+            batch.set(newRef, doc.data());
+          }
+        }
+
+        // diaries 마이그레이션
+        for (var doc in guestDiaries ?? []) {
+          final newRef = db.collection('users').doc(socialUid)
+              .collection('diaries').doc(doc.id);
+          final existing = await newRef.get();
+          if (!existing.exists) {
+            batch.set(newRef, doc.data());
+          }
+        }
+
+        // 비회원 문서 삭제
+        if (previousGuestUid != socialUid) {
+          batch.delete(db.collection('users').doc(previousGuestUid));
+        }
+
+        await batch.commit();
+        print('✅ 마이그레이션 완료: $previousGuestUid → $socialUid');
+        return userCredential;
       }
 
-      // 4️⃣ 신규 소셜 계정 또는 기존 소셜 계정 처리
-      final userDoc = db.collection('users').doc(firebaseUser.uid);
+      // 4️⃣ 신규/기존 소셜 계정 처리
+      final userDoc = db.collection('users').doc(socialUid);
       final docSnapshot = await userDoc.get();
 
       if (!docSnapshot.exists) {
         print('🆕 신규 소셜 회원');
         await userDoc.set({
-          'uuid': firebaseUser.uid,
-          'firebaseUid': firebaseUser.uid,
+          'uuid': socialUid,
+          'firebaseUid': socialUid,
           'name': firebaseUser.displayName ?? '',
           'email': firebaseUser.email ?? '',
           'provider': 'google',
@@ -128,7 +155,6 @@ class FirebaseAuthRepository implements AuthRepository {
         print('✅ 기존 소셜 회원 로그인');
       }
 
-      print('🟢 [AuthRepo] signInWithGoogle 정상 종료');
       return userCredential;
 
     } catch (e, stack) {
@@ -168,6 +194,7 @@ class FirebaseAuthRepository implements AuthRepository {
       if (user != null) {
         await db.collection('users').doc(user.uid).set({
           'uuid': user.uid,
+          'firebaseUid': user.uid,
           'createdAt': FieldValue.serverTimestamp(),
           'isGuest': true,
           'provider': 'guest',

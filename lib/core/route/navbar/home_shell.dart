@@ -13,7 +13,7 @@ class HomeShell extends StatelessWidget {
 
     int currentIndex = 0;
     if (location.startsWith('/diary')) currentIndex = 1;
-    else if (location.startsWith('/toTeddy')) currentIndex = 2;
+    else if (location.startsWith('/emotion')) currentIndex = 2;
     else if (location.startsWith('/settings')) currentIndex = 3;
 
 
@@ -34,7 +34,7 @@ class HomeShell extends StatelessWidget {
                 context.go('/diary');
                 break;
               case 2:
-                context.go('/toTeddy');
+                context.go('/emotion');
                 break;
               case 3:
                 context.go('/settings');

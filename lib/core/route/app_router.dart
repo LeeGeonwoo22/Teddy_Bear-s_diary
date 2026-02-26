@@ -1,11 +1,13 @@
 
 import 'package:go_router/go_router.dart';
-import '../../features/chat/chatbotFeature.dart';
-import '../../features/auth/loginPage.dart';
-import '../../features/diary/diary.dart';
-import '../../features/settings/setting.dart';
+import '../../features/chat/chatbot_page.dart';
+import '../../features/auth/login_page.dart';
+import '../../features/diary/diary_page.dart';
+// import '../../features/emotion/emotion_graph.dart';
+import '../../features/emotion/emotion_graph_2.dart';
+import '../../features/emotion/emotion_graph_3.dart';
+import '../../features/settings/setting_page.dart';
 import '../../features/splash/splash_page.dart';
-import '../../features/to/toTeddy.dart';
 import 'navbar/home_shell.dart';
 
 class AppRouter {
@@ -33,8 +35,8 @@ class AppRouter {
             builder: (context, state) => DiaryPage(),
           ),
           GoRoute(
-            path: '/toTeddy',
-            builder: (context, state) => AnotherPage(),
+            path: '/emotion',
+            builder: (context, state) => EmotionGraphPage_3(),
           ),
           GoRoute(
             path: '/settings',

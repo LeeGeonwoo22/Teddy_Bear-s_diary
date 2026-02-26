@@ -136,6 +136,7 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState> {
 
             if(updatedDiaries.containsKey(normalizedDate)) {
               updatedDiaries[normalizedDate] = updatedDiaries[normalizedDate]!.copyWith(emotion: event.emotion);
+              print('✅ State 업데이트 완료: ${updatedDiaries[normalizedDate]?.emotion}');
               emit(state.copyWith(diaries: updatedDiaries));
             }
 

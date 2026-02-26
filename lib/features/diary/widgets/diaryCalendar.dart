@@ -61,6 +61,7 @@ class _DiaryCalendarState extends State<DiaryCalendar> {
               setState(() {
                 // 선택한 날짜의 달로 업데이트
                 _focusedDay = focusedDay;
+                _selectedDay = selectedDay;
               });
               widget.onDaySelected(selectedDay);
             },
@@ -69,11 +70,18 @@ class _DiaryCalendarState extends State<DiaryCalendar> {
               markerBuilder: (context, date, events) {
                 final normalizedDay = DateTime(date.year, date.month, date.day);
                 final diary = state.diaries[normalizedDay];
+
                 if (diary?.emotion != null && diary!.emotion!.isNotEmpty) {
-                  return Text(diary.emotion!, style: TextStyle(fontSize: 14));
+                  return Positioned(
+                    bottom: 1,
+                    child: Text(diary.emotion!, style: TextStyle(fontSize: 12)),
+                  );
                 }
                 return events.isNotEmpty
-                    ? Text('●', style: TextStyle(fontSize: 8, color: Color(0xFF5D4037)))
+                    ? Positioned(
+                  bottom: 1,
+                  child: Text('●', style: TextStyle(fontSize: 8, color: Color(0xFF5D4037))),
+                )
                     : null;
               },
             ),

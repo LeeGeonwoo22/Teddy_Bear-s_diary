@@ -251,12 +251,18 @@ class DiaryRepository {
   }
   // 감정 업데이트
   Future<void> updateEmotion(DateTime date, String emotion) async {
-    final dateKey = DateFormatter.formatDate(date);
     final uid = _uid;
+    final dateKey = DateFormatter.formatDate(date);
+
     await db.collection('users').doc(uid)
         .collection('diaries').doc(dateKey)
-        .update({'emotion': emotion});
+        .set(
+      {'emotion': emotion},
+      SetOptions(merge: true),  // ✅ update → set + merge로 변경
+    );
 
+    await local.updateEmotion(date, emotion);
+    print('✅ 감정 저장 완료: $emotion / $dateKey');
   }
   // 📌 헬퍼 메서드: Local 캐시 업데이트
   Future<void> _updateLocalCache(List<Diary> diaries) async {

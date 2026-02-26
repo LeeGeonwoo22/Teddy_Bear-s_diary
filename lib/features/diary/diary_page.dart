@@ -66,12 +66,23 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
     //   return ;
     // }
     // _showEmotionAskDialog(state.selectedDate!);
+
     if (state.selectedDate == null) return;
     // ✅ 일기 유무 상관없이 바로 띄움
     _showEmotionAskDialog(state.selectedDate!);
   }
 
   void _showEmotionAskDialog(DateTime date) {
+    final today = DateTime.now();
+    final isToday = date.year == today.year && date.month == today.month && date.day == today.day;
+
+    final state = context.read<DiaryBloc>().state;
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final currentEmotion = state.diaries[normalizedDate]?.emotion;
+    print('🔍 현재 날짜: $normalizedDate');
+    print('🔍 현재 이모지: $currentEmotion');
+    print('🔍 오늘 여부: $isToday');
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -95,6 +106,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
             },
             child: Text('아니야'),
           ),
+          if (isToday)
           TextButton(
             onPressed: () {
               Navigator.pop(context);
@@ -133,6 +145,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
                 leading: Text(e['emoji']!, style: TextStyle(fontSize: 24)),
                 title: Text(e['label']!),
                 onTap: () {
+                  print('✅ 이모지 선택: ${e['emoji']}');
                   context.read<DiaryBloc>().add(
                     UpdateEmotion(
                       date: date,
