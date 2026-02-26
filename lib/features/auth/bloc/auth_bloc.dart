@@ -13,6 +13,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginAsGuest>(_onLoginAsGuest);
     on<ResetGuest>(_onResetGuest);
     on<LogoutRequested>(_onLogoutRequested);
+    on<DeleteAccount>(_onDeleteAccount);
   }
   void onTransition(Transition<AuthEvent, AuthState> transition) {
     super.onTransition(transition);
@@ -181,6 +182,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.copyWith(
         error: '로그아웃 실패: $e',
       ));
+    }
+  }
+
+  // 회원 탈퇴
+  Future<void> _onDeleteAccount(
+      DeleteAccount event,
+      Emitter<AuthState> emit,
+      ) async {
+    emit(AuthState.loading());
+    try {
+      await _authRepository.deleteAccount();
+      emit(AuthState.initial());
+    } catch (e) {
+      print('DeleteAccount error: $e');
+      emit(state.copyWith(error: '탈퇴 실패: $e'));
     }
   }
 

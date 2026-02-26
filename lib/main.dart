@@ -16,6 +16,9 @@ import 'features/chat/bloc/chat_bloc.dart';
 import 'features/diary/bloc/diary_bloc.dart';
 import 'features/diary/bloc/diary_event.dart';
 import 'features/diary/repository/diaryRepository.dart';
+import 'features/settings/bloc/setting_bloc.dart';
+import 'features/settings/bloc/setting_event.dart';
+import 'features/settings/repository/settingRepository.dart';
 import 'firebase_options.dart';
 
 void main() async{
@@ -30,14 +33,17 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   // 초기화 완료
+  /*final s = Stopwatch()..start();*/
   await InjectorSetup.setupLocator();
+  /*print('⏱ setupLocator: ${s.elapsedMilliseconds}ms');*/
   // 암호화 테스트
   final encryption = EncryptionService();
   await encryption.init();
-
-
-  print('✅ 암호화 초기화 완료');
+  // print('⏱ encryption.init: ${s.elapsedMilliseconds}ms');
+  //
+  // print('✅ 암호화 초기화 완료');
 
   runApp(
       MultiBlocProvider(
@@ -54,6 +60,13 @@ void main() async{
             InjectorSetup.injector<DiaryRepository>())..add(const LoadDiaries(),
           ),
         ),
+        BlocProvider(
+          create: (_) => SettingBloc(
+            settingRepository: InjectorSetup.injector<SettingRepository>(),
+            chatRepository: InjectorSetup.injector<ChatRepository>(),
+          )..add(LoadSettings(),
+          ),
+        )
       ],
       child: App()));
 }

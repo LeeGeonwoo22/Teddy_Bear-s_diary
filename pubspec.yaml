@@ -14,7 +14,8 @@ dependencies:
   # ✅ Flutter 공식 다국어(Localizations) — 반드시 포함
   flutter_localizations:
     sdk: flutter
-
+  # 차트
+  fl_chart: ^1.1.1
   # ✅ 문자열/날짜 포맷, 로컬라이제이션용
   intl: ^0.20.2
 
@@ -38,6 +39,8 @@ dependencies:
   hive_ce: ^2.16.0
   hive_ce_flutter: ^2.3.3
 
+  # 공유
+  share_plus: ^12.0.1
 
   # UI / Animations / Icons
   animated_text_kit: ^4.3.0

@@ -1,70 +1,63 @@
-// features/settings/repository/SettingRepository.dart
-
 import 'package:hive_ce/hive.dart';
 import '../../../data/model/settings.dart';
 
 class SettingRepository {
-  static const String _boxName = 'settings';
-  static const String _key = 'app_settings';
-  static Box<Settings>? _box;
+    // String _boxName = 'settings';
+    static const String _key = 'app_settings';
 
-  /// 초기화 (main.dart에서 호출 필수!)
-  static Future<void> init() async {
-    _box = await Hive.openBox<Settings>(_boxName);
-    print('⚙️ SettingRepository 초기화 완료');
+    final Box<Settings> _box;
 
-    // ✅ Box가 비어있으면 기본값 생성
-    if (_box!.isEmpty) {
-      final defaultSettings = Settings();
-      await _box!.put(_key, defaultSettings);
-      print('✅ 기본 설정 생성: ${defaultSettings.diaryCreationHour}시');
-    }
+  // 🔹 생성자에서 box 주입 (권장 방식)
+  SettingRepository(this._box);
+  // ✅ 설정 가져오기 (null 없음)
+  Settings loadSettings() {
+    return _box.get(_key)!;
   }
 
-  /// 설정 가져오기
-  static Settings? getSettings() {
-    print('🔍 getSettings 호출');
-
-    if (_box == null) {
-      print('❌ Box가 null! init()를 먼저 호출하세요!');
-      return null;
-    }
-
-    final settings = _box!.get(_key);
-
-    if (settings == null) {
-      print('⚠️ 설정이 없음. 기본값 생성');
-      final defaultSettings = Settings();
-      _box!.put(_key, defaultSettings);
-      return defaultSettings;
-    }
-
-    print('✅ 설정 로드: ${settings.diaryCreationHour}시');
-    return settings;
+  // ✅ 전체 저장
+  Future<void> saveSettings(Settings settings) async {
+    await _box.put(_key, settings);
   }
 
-  /// 설정 저장
-  static Future<void> saveSettings(Settings settings) async {
-    await _box!.put(_key, settings);
-    print('💾 설정 저장: ${settings.diaryCreationHour}시');
+  // ✅ 일기 생성 시간
+  Future<void> saveDiaryCreationHour(int hour) async {
+    final updated =
+    loadSettings().copyWith(diaryCreationHour: hour);
+    await saveSettings(updated);
   }
 
-  /// 특정 필드만 업데이트
-  static Future<void> setDiaryCreationHour(int hour) async {
-    final settings = getSettings() ?? Settings();
-    settings.diaryCreationHour = hour;
-    await saveSettings(settings);
+  // ✅ 일기 길이
+  Future<void> saveDiaryLength(int length) async {
+    final updated =
+    loadSettings().copyWith(diaryLength: length);
+    await saveSettings(updated);
   }
 
-  static Future<void> setDiaryLength(int length) async {
-    final settings = getSettings() ?? Settings();
-    settings.diaryLength = length;
-    await saveSettings(settings);
+  // ✅ 알림
+  Future<void> saveNotification(bool enabled) async {
+    final updated =
+    loadSettings().copyWith(notificationEnabled: enabled);
+    await saveSettings(updated);
   }
 
-  static Future<void> setNotificationEnabled(bool enabled) async {
-    final settings = getSettings() ?? Settings();
-    settings.notificationEnabled = enabled;
-    await saveSettings(settings);
+  // ✅ 채팅 리마인더
+  Future<void> saveChatReminder(bool enabled) async {
+    final updated =
+    loadSettings().copyWith(chatReminderEnabled: enabled);
+    await saveSettings(updated);
+  }
+
+  // ✅ 테마
+  Future<void> saveTheme(String theme) async {
+    final updated =
+    loadSettings().copyWith(theme: theme);
+    await saveSettings(updated);
+  }
+
+  // ✅ 백업 날짜 업데이트
+  Future<void> updateLastBackupDate(DateTime date) async {
+    final updated =
+    loadSettings().copyWith(lastBackupDate: date);
+    await saveSettings(updated);
   }
 }

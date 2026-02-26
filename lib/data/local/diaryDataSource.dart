@@ -1,6 +1,7 @@
 
 import 'package:hive_ce/hive.dart';
 
+import '../../core/common/dateFormatter.dart';
 import '../model/diary.dart';
 
 class DiaryLocalSource {
@@ -13,13 +14,13 @@ class DiaryLocalSource {
   }
 
   Future<void> saveDiary(Diary diary) async {
-    final key = _dateToKey(diary.date);
+    final key = DateFormatter.formatDate(diary.date);
     await _box!.put(key, diary);
     print('💾 일기 저장 완료: $key');
   }
 
   Future<Diary?> getDiaryByDate(DateTime date) async {
-    final key = _dateToKey(date);
+    final key = DateFormatter.formatDate(date);
     final diary = _box!.get(key);
     print('🔍 일기 조회: $key → ${diary != null ? "찾음" : "없음"}');
     return diary;
@@ -40,7 +41,7 @@ class DiaryLocalSource {
   }
 
   Future<void> deleteDiary(DateTime date) async {
-    final key = _dateToKey(date);
+    final key = DateFormatter.formatDate(date);
     await _box!.delete(key);
     print('🗑️ 일기 삭제: $key');
   }
@@ -50,8 +51,15 @@ class DiaryLocalSource {
     print('🧹 전체 일기 삭제 완료!');
   }
 
-  // ✅ 날짜 → 키 변환
-  String _dateToKey(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  // diaryDataSource.dart
+  Future<void> updateEmotion(DateTime date, String emotion) async {
+    final key = DateFormatter.formatDate(date);
+    final existing = _box!.get(key);
+
+    if (existing != null) {
+      final updated = existing.copyWith(emotion: emotion);
+      await _box!.put(key, updated);
+      print('💾 로컬 emotion 업데이트 완료: $emotion');
+    }
   }
 }

@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../auth/bloc/auth_bloc.dart';
+import '../../auth/bloc/auth_event.dart';
+import '../../chat/bloc/chat_bloc.dart';
+import '../../chat/bloc/chat_event.dart';
+import '../../diary/bloc/diary_bloc.dart';
+import '../../diary/bloc/diary_event.dart';
 
 class SettingDialog {
   // ✅ bool 반환하도록 수정
-  static Future<bool> showResetChatDialog({
+  static Future<void> showResetChatDialog({
     required BuildContext context,
   }) async {
     final confirmed = await showDialog<bool>(
@@ -16,18 +25,27 @@ class SettingDialog {
             child: Text('취소'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, true),  // ✅ 확인만
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text('삭제'),
           ),
         ],
       ),
     );
-                                      
-    return confirmed ?? false; // ✅ 결과 반환
+
+    if (confirmed == true && context.mounted) {
+      context.read<ChatBloc>().add(DeleteAllMessages());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('대화 내용이 삭제되었어요'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
-  static Future<bool> showResetAllDialog({
+
+  static Future<void> showResetAllDialog({
     required BuildContext context,
   }) async {
     final confirmed = await showDialog<bool>(
@@ -41,7 +59,7 @@ class SettingDialog {
             child: Text('취소'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, true),  // ✅ 확인만
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text('전체 삭제'),
           ),
@@ -49,27 +67,81 @@ class SettingDialog {
       ),
     );
 
-    return confirmed ?? false; // ✅ 결과 반환
+    if (confirmed == true && context.mounted) {
+      context.read<ChatBloc>().add(DeleteAllMessages());
+      context.read<DiaryBloc>().add(DeleteAllDiaries());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('모든 데이터가 초기화되었어요'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
-  // ✅ context 추가
-  static Future<bool> showLogoutDialog({
+  static Future<void> showLogoutDialog({
     required BuildContext context,
   }) async {
-    // TODO: 로그아웃 기능
-    return false;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('로그아웃'),
+        content: Text('정말 로그아웃 하시겠어요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text('로그아웃'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('로그아웃 되었어요')),
+      );
+      context.read<AuthBloc>().add(LogoutRequested());
+      context.go('/login');
+    }
   }
 
-  static Future<bool> showDeleteAccountDialog({
+  static Future<void> showDeleteAccountDialog({
     required BuildContext context,
   }) async {
-    // TODO: 회원 탈퇴 기능
-    return false;
-  }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('⚠️ 회원 탈퇴'),
+        content: Text('탈퇴 시 모든 데이터가 영구 삭제됩니다.\n정말 탈퇴하시겠어요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text('탈퇴'),
+          ),
+        ],
+      ),
+    );
 
-  static Future<void> showBackupDialog({
-    required BuildContext context,
-  }) async {
-    // TODO: 백업 기능 (확인 필요 없으면 void 가능)
+    if (confirmed == true && context.mounted) {
+      context.read<AuthBloc>().add(DeleteAccount());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('탈퇴가 완료되었어요'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      context.go('/login');
+    }
   }
 }

@@ -13,6 +13,7 @@ import 'data/model/message.dart';
 import 'core/common/aIService.dart';
 import 'data/model/settings.dart';
 import 'features/diary/repository/diaryRepository.dart';
+import 'features/settings/repository/settingRepository.dart';
 
 class InjectorSetup {
   static final injector = GetIt.instance;
@@ -27,6 +28,12 @@ class InjectorSetup {
     Hive.registerAdapter(MessageAdapter());
     Hive.registerAdapter(DiaryAdapter());
     Hive.registerAdapter(SettingsAdapter());
+
+    final settingsBox = await Hive.openBox<Settings>('settings');
+
+    if (!settingsBox.containsKey('app_settings')) {
+      await settingsBox.put('app_settings', Settings());
+    }
 
     // ✅ http client
     injector.registerLazySingleton<http.Client>(
@@ -67,7 +74,8 @@ class InjectorSetup {
     injector.registerLazySingleton(
           () => ChatRepository(
         remote: injector<AIService>(),
-        local: injector<ChatLocalSource>(), authRepository:injector<AuthRepository>(),
+        local: injector<ChatLocalSource>(),
+            authRepository:injector<AuthRepository>(),
       ),
     );
 
@@ -79,6 +87,8 @@ class InjectorSetup {
         chatRepository: injector<ChatRepository>(), authRepository: injector<AuthRepository>(),  // ✅ ChatRepository로 수정!
       ),
     );
-    // injector.registerLazySingleton(()=>);
+    injector.registerLazySingleton<SettingRepository>(
+          () => SettingRepository(settingsBox),
+    );
   }
 }

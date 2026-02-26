@@ -33,50 +33,10 @@ class LogoutRequested extends AuthEvent {
   const LogoutRequested();
 }
 
-/// 소셜 로그인 시도 (예: Google)
-// class LoginWithGoogle extends AuthEvent {
-//   final String name;
-//   final String email;
-//   final String provider; // google, facebook, apple 등
-//
-//   const LoginWithGoogle({
-//     required this.name,
-//     required this.email,
-//     required this.provider,
-//   });
-//
-//   @override
-//   List<Object?> get props => [name, email, provider];
-// }
-//
-// class LoginWithFacebook extends AuthEvent {
-//   final String name;
-//   final String email;
-//   final String provider; // google, facebook, apple 등
-//
-//   const LoginWithFacebook({
-//     required this.name,
-//     required this.email,
-//     required this.provider,
-//   });
-//
-//   @override
-//   List<Object?> get props => [name, email, provider];
-// }
-//
-// class LoginWithApple extends AuthEvent {
-//   final String name;
-//   final String email;
-//   final String provider; // google, facebook, apple 등
-//
-//   const LoginWithApple({
-//     required this.name,
-//     required this.email,
-//     required this.provider,
-//   });
-//
-//   @override
-//   List<Object?> get props => [name, email, provider];
-// }
+// auth_event.dart
+class DeleteAccount extends AuthEvent {
+  const DeleteAccount();
+}
+
 /// 비회원 데이터 리셋 (UUID 포함)
 class ResetGuest extends AuthEvent {}

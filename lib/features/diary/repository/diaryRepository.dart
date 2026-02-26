@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:table_calendar/table_calendar.dart';
+
 import 'package:teddyBear/features/chat/repository/chatRepository.dart';
 import '../../../core/common/aIService.dart';
 import '../../../core/common/dateFormatter.dart';
@@ -33,7 +33,9 @@ class DiaryRepository {
   }
 
   // 일기 생성
-  Future<Diary?> createTodayDiary() async {
+  Future<Diary?> createTodayDiary( {required int diaryLength, required int diaryCreationHour})
+    async {
+
     try {
       final uid = _uid;
       final today = DateFormatter.normalizeDate(DateTime.now());
@@ -53,23 +55,25 @@ class DiaryRepository {
       }
 
       // 오늘 대화 가져오기
+// 오늘 대화 가져오기
       final todayMessages = await chatRepository.getTodayMessages();
+
+// ✅ 체크 먼저
       if (todayMessages.length < 20) {
         print('⚠️ 곰돌이에게 오늘 이야기를 더 해주세요');
         return null;
       }
 
-      // final todayMessages = await chatRepository.getTodayUserMessages();
-      //
-      // if (todayMessages.length < 2 {
-      //   return null;
-      // }
-
-
       print('✅ 오늘 대화 ${todayMessages.length}개 불러옴');
 
       // AI로 일기 생성
-      final content = await remote.generateDiary(todayMessages);
+      final content = await remote.generateDiary(
+        todayMessages,
+        diaryLength: diaryLength,
+      );
+      print('✅ 오늘 대화 ${todayMessages.length}개 불러옴');
+
+
 
       // Diary 객체 생성
       final diary = Diary(
@@ -111,6 +115,7 @@ class DiaryRepository {
     // ✅ 여기서 함수 끝! 아래 주석 코드들 전부 삭제
   }
 
+  // 일기 불러오기
   Future<Map<DateTime, Diary>> loadDiaries() async {
     try {
       final uid = _uid;
@@ -218,12 +223,52 @@ class DiaryRepository {
       return await _loadFromLocalCache();
     }
   }
-// 📌 헬퍼 메서드: Local 캐시 업데이트
+
+  // 일기 지우기
+  Future<void> deleteAllDiaries() async {
+    try {
+      final uid = _uid;
+      final batch = db.batch();
+
+      final diaryDocs = await db
+          .collection('users')
+          .doc(uid)
+          .collection('diaries')
+          .get();
+
+      for (var doc in diaryDocs.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+      await local.clearAll();  // 로컬도 삭제
+
+      print('🗑️ 모든 일기 삭제 완료');
+    } catch (e) {
+      print('❌ 일기 삭제 실패: $e');
+      rethrow;
+    }
+  }
+  // 감정 업데이트
+  Future<void> updateEmotion(DateTime date, String emotion) async {
+    final uid = _uid;
+    final dateKey = DateFormatter.formatDate(date);
+
+    await db.collection('users').doc(uid)
+        .collection('diaries').doc(dateKey)
+        .set(
+      {'emotion': emotion},
+      SetOptions(merge: true),  // ✅ update → set + merge로 변경
+    );
+
+    await local.updateEmotion(date, emotion);
+    print('✅ 감정 저장 완료: $emotion / $dateKey');
+  }
+  // 📌 헬퍼 메서드: Local 캐시 업데이트
   Future<void> _updateLocalCache(List<Diary> diaries) async {
     try {
       // 전체 삭제 후 새로 저장
       // await local.clearAllDiaries();
-
       for (var diary in diaries) {
         await local.saveDiary(diary);
       }
@@ -257,4 +302,8 @@ class DiaryRepository {
       return {};
     }
   }
+
+
 }
+
+

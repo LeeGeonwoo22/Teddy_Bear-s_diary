@@ -57,7 +57,9 @@ class AIService {
     }
   }
 
-  Future<String> generateDiary(List<Message> todayChats) async {
+  Future<String> generateDiary(List<Message> todayChats, {
+    int diaryLength = 500,  // 기본값 설정
+  }) async {
     try{
       // 일기작성용 프롬프트 로드
       final diaryPrompt = await rootBundle.loadString('assets/prompts/diary.json');
@@ -80,7 +82,7 @@ class AIService {
         },
         body: jsonEncode({
           "model": "gpt-4o-mini",
-          "max_tokens": 500,
+          "max_tokens": diaryLength,
           "temperature": 0.8,
           "messages": [
             {"role": "system", "content": systemPrompt},

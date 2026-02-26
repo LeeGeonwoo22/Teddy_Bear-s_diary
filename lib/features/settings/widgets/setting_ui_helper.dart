@@ -19,15 +19,16 @@ class SettingUiHelper {
 
   static String getDiaryLengthText(int length) {
     switch (length) {
-      case 0:
-        return '짧게 (약 200자)';
-      case 1:
-        return '보통 (약 300자)';
-      case 2:
-        return '길게 (약 500자)';
-      default:
-        return '보통';
+      case 300: return '짧게 (약 200자)';
+      case 500: return '보통 (약 300자)';
+      case 800: return '길게 (약 500자)';
+      default:  return '보통 (약 300자)';
     }
+  }
+
+  static String formatHour(int value) {
+    if (value == 2330) return '23시 30분';
+    return '$value시';
   }
 
   static String getThemeText(String theme) {

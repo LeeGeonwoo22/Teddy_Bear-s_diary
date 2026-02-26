@@ -9,6 +9,7 @@ import 'package:teddyBear/features/diary/bloc/diary_event.dart';
 import '../../core/common/global.dart';
 import '../diary/bloc/diary_bloc.dart';
 import '../diary/bloc/diary_state.dart';
+import '../settings/bloc/setting_bloc.dart';
 import 'widgets/chat_helpers.dart';
 
 class ChatbotFeature extends StatefulWidget {
@@ -126,8 +127,14 @@ class _ChatbotFeatureState extends State<ChatbotFeature> {
             }, icon: Icon(isSearching ? Icons.close : Icons.search)),
             IconButton(
               onPressed: () {
+                final settingState = context.watch<SettingBloc>().state;
                 print('📝 일기 생성 버튼 클릭!');
-                context.read<DiaryBloc>().add(GenerateDiary(date: DateTime.now()));
+                context.read<DiaryBloc>().add(
+                    GenerateDiary(
+                      date: DateTime.now(),
+                      diaryLength: settingState.diaryLength,
+                      diaryCreationHour: settingState.diaryCreationHour,
+                    ));
               },
               icon: Icon(Icons.book),
               tooltip: '일기 생성',

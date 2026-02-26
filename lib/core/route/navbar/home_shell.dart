@@ -12,8 +12,8 @@ class HomeShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.toString();
 
     int currentIndex = 0;
-    if (location.startsWith('/journal')) currentIndex = 1;
-    else if (location.startsWith('/memorial')) currentIndex = 2;
+    if (location.startsWith('/diary')) currentIndex = 1;
+    else if (location.startsWith('/emotion')) currentIndex = 2;
     else if (location.startsWith('/settings')) currentIndex = 3;
 
 
@@ -34,7 +34,7 @@ class HomeShell extends StatelessWidget {
                 context.go('/diary');
                 break;
               case 2:
-                context.go('/toTeddy');
+                context.go('/emotion');
                 break;
               case 3:
                 context.go('/settings');
@@ -44,7 +44,7 @@ class HomeShell extends StatelessWidget {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: '이야기'),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: '일기'),
-            BottomNavigationBarItem(icon: Icon(Icons.mood), label: '타로'),
+            BottomNavigationBarItem(icon: Icon(Icons.mood), label: '감정 그래프'),
             BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
           ],
     ));
