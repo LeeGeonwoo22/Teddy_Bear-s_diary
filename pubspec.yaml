@@ -97,7 +97,7 @@ flutter:
     - assets/images/splash/
     - assets/.env
     - assets/prompts/
-    - assets/prompts/core/
+    - assets/prompts/like/
     - assets/prompts/chat/
 #    - assets/prompts/dev/
     - assets/prompts/diary/

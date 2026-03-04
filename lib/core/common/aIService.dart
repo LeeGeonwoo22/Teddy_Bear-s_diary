@@ -12,23 +12,47 @@ class AIService {
   final http.Client _client;
   AIService(this._client);
 
+  Future<String> _buildSystemPrompt(String configPath) async {
+    final jsonString = await rootBundle.loadString(configPath);
+    final fileList = jsonDecode(jsonString)['files'];
+
+    StringBuffer promptBuffer = StringBuffer();
+    promptBuffer.writeln("### [SYSTEM RULE: 당신의 본질] ###");
+
+    for (final filename in fileList) {
+      final content = await rootBundle.loadString('assets/prompts/$filename');
+      // 파일명에 'like'가 포함되면 가장 강조
+      if (filename.contains('like')) {
+        promptBuffer.writeln("\n[CORE IDENTITY - 절대 잊지 말 것]\n$content");
+      } else {
+        promptBuffer.writeln("\n[CONTEXTUAL RULE]\n$content");
+      }
+    }
+    // 마지막에 강력한 행동 지침 추가 (Recency Effect 활용)
+    promptBuffer.writeln("\n### [최종 지시] ###");
+    promptBuffer.writeln("위의 모든 정체성을 유지하되, 사용자의 마지막 문장의 '온도'와 '속도'에 반드시 맞추어 응답하세요.");
+
+    return promptBuffer.toString();
+  }
 
 
   // 문장 대답
   Future<String> fetchAnswer(String question) async {
     try {
-      // 1️⃣ 곰돌이 프롬프트 파일 목록 읽기
-      final jsonString = await rootBundle.loadString('assets/prompts/chat.json');
-      final fileList = jsonDecode(jsonString)['files'];
-
-      // 2️⃣ 시스템 프롬프트 병합 (모든 파일 내용 합치기)
-      String systemPrompt = '';
-      for (final filename in fileList) {
-        final content = await rootBundle.loadString('assets/prompts/$filename');
-        systemPrompt += '\n\n$content';
-      }
+      // // 1️⃣ 곰돌이 프롬프트 파일 목록 읽기
+      // final jsonString = await rootBundle.loadString('assets/prompts/chat.json');
+      // final fileList = jsonDecode(jsonString)['files'];
+      //
+      // // 2️⃣ 시스템 프롬프트 병합 (모든 파일 내용 합치기)
+      // String systemPrompt = '';
+      // for (final filename in fileList) {
+      //   final content = await rootBundle.loadString('assets/prompts/$filename');
+      //   systemPrompt += '\n\n$content';
+      // }
 
       // 3️⃣ API 요청
+      final systemPrompt = await _buildSystemPrompt('assets/prompts/chat.json');
+
       final response = await _client.post(
         Uri.parse('https://api.openai.com/v1/chat/completions'),
         headers: {
@@ -38,7 +62,8 @@ class AIService {
         body: jsonEncode({
           "model": "gpt-4o-mini",
           "max_tokens": 300,
-          "temperature": 0.8,
+          "temperature": 0.7,
+          "presence_penalty": 0.6, // 새로운 화제를 갑자기 꺼내지 않도록 유도
           "messages": [
             {"role": "system", "content": systemPrompt},
             {"role": "user", "content": question}
@@ -83,7 +108,8 @@ class AIService {
         body: jsonEncode({
           "model": "gpt-4o-mini",
           "max_tokens": diaryLength,
-          "temperature": 0.8,
+          "temperature": 0.85,
+          "top_p": 0.95, // 문장의 창의성을 살리면서 일관성을 유지
           "messages": [
             {"role": "system", "content": systemPrompt},
             {"role": "user", "content": conversationHistory}

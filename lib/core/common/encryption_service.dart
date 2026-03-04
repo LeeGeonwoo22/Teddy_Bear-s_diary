@@ -1,4 +1,4 @@
-// core/common/encryption_service.dart
+// like/common/encryption_service.dart
 import 'package:encrypt/encrypt.dart' as enc;
 import 'global.dart';
 

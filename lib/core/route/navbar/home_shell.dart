@@ -14,7 +14,8 @@ class HomeShell extends StatelessWidget {
     int currentIndex = 0;
     if (location.startsWith('/diary')) currentIndex = 1;
     else if (location.startsWith('/emotion')) currentIndex = 2;
-    else if (location.startsWith('/settings')) currentIndex = 3;
+    else if (location.startsWith('/card')) currentIndex = 3;
+    else if (location.startsWith('/setting')) currentIndex = 4;
 
 
     return Scaffold(
@@ -37,6 +38,9 @@ class HomeShell extends StatelessWidget {
                 context.go('/emotion');
                 break;
               case 3:
+                context.go('/card');
+                break;
+              case 4:
                 context.go('/settings');
                 break;
             }
@@ -45,6 +49,7 @@ class HomeShell extends StatelessWidget {
             BottomNavigationBarItem(icon: Icon(Icons.home), label: '이야기'),
             BottomNavigationBarItem(icon: Icon(Icons.book), label: '일기'),
             BottomNavigationBarItem(icon: Icon(Icons.mood), label: '감정 그래프'),
+            BottomNavigationBarItem(icon: Icon(Icons.star_outlined), label: '조언 카드'),
             BottomNavigationBarItem(icon: Icon(Icons.settings), label: '설정'),
           ],
     ));
