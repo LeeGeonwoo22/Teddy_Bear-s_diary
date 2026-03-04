@@ -61,11 +61,7 @@ class _DiaryPageState extends State<DiaryPage> with SingleTickerProviderStateMix
     final state = context.read<DiaryBloc>().state;
     final diary = state.diaries[state.selectedDate];
 
-    // if (diary != null) {
-    //   _dialogueController.setDialogues(["어느 일기를 같이 읽어볼까? 🧸"]);
-    //   return ;
-    // }
-    // _showEmotionAskDialog(state.selectedDate!);
+
 
     if (state.selectedDate == null) return;
     // ✅ 일기 유무 상관없이 바로 띄움

@@ -98,7 +98,7 @@ class ChatRepository {
   }
 
   /// 메시지 전송
-  Future<Message> sendMessage(String userMsg) async {
+  Future<Message> sendMessage(String userMsg, List<Message> history) async {
 
     try{
       // 🔐 암호화 초기화
@@ -113,11 +113,6 @@ class ChatRepository {
       await local.saveMessage(userMessage);
       // 암호화
       final encryptedUserMsg = _encryption.encrypt(userMsg);
-      // 암호화 반환값 테스트
-      final encryptedData = _encryption.encrypt('테스트');
-      print('🔍 encrypt 반환 타입: ${encryptedData.runtimeType}');
-      print('🔍 encrypt 반환 값: $encryptedData');
-      print('📤 사용자 메시지 저장 완료 (암호화됨)');
 
       await db.collection('users')
           .doc(uid).collection('messages')
@@ -131,7 +126,7 @@ class ChatRepository {
 
 
       // 2️⃣ AI API 응답
-      final answer = await remote.fetchAnswer(userMsg);
+      final answer = await remote.fetchAnswer(history);
       // bot 메세지 생성
       final botMessage =
       Message(msg: answer, msgType: MessageType.bot);

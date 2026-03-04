@@ -2,7 +2,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:teddyBear/features/emotion/emotion_graph_5.dart';
 
-import '../../features/card/card_page_3.dart';
+import '../../features/card/card_page.dart';
 import '../../features/chat/chatbot_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/diary/diary_page.dart';
@@ -44,7 +44,7 @@ class AppRouter {
           ),
           GoRoute(
             path: '/card',
-            builder: (context, state) => CardReadingPage_3(),
+            builder: (context, state) => CardReadingPage(),
           ),
           GoRoute(
             path: '/settings',
