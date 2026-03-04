@@ -70,7 +70,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   Future<void> _onAskQuestion(
       AskQuestion event,
       Emitter<ChatState> emit,
-      ) async {
+      )
+  async {
     print('askQuestion 이벤트 시작: ${event.question}');
 
     // 1. 사용자 메시지 추가
@@ -91,7 +92,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     try {
       // 3. repository 호출
-      final res = await _chatRepository.sendMessage(event.question);
+      final res = await _chatRepository.sendMessage(
+        event.question,
+        messagesWithUser,  // 현재 state에 이미 히스토리 있음
+      );
 
       // 4. 응답 메세지
       final botMessage = res;

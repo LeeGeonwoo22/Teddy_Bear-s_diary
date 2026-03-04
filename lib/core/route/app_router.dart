@@ -1,11 +1,15 @@
 
 import 'package:go_router/go_router.dart';
+import 'package:teddyBear/features/emotion/emotion_graph_5.dart';
+
+import '../../features/card/card_page.dart';
 import '../../features/chat/chatbot_page.dart';
 import '../../features/auth/login_page.dart';
 import '../../features/diary/diary_page.dart';
 // import '../../features/emotion/emotion_graph.dart';
 import '../../features/emotion/emotion_graph_2.dart';
 import '../../features/emotion/emotion_graph_3.dart';
+import '../../features/emotion/emotion_graph_4.dart';
 import '../../features/settings/setting_page.dart';
 import '../../features/splash/splash_page.dart';
 import 'navbar/home_shell.dart';
@@ -36,7 +40,11 @@ class AppRouter {
           ),
           GoRoute(
             path: '/emotion',
-            builder: (context, state) => EmotionGraphPage_3(),
+            builder: (context, state) => EmotionGraphPage_4(),
+          ),
+          GoRoute(
+            path: '/card',
+            builder: (context, state) => CardReadingPage(),
           ),
           GoRoute(
             path: '/settings',

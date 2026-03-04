@@ -7,28 +7,49 @@ import 'appString.dart';
 import 'global.dart';
 import '../../data/model/message.dart';
 
-
 class AIService {
   final http.Client _client;
   AIService(this._client);
 
+  Future<String> _buildSystemPrompt(String configPath) async {
+    final jsonString = await rootBundle.loadString(configPath);
+    final fileList = jsonDecode(jsonString)['files'];
 
+    StringBuffer promptBuffer = StringBuffer();
+    promptBuffer.writeln("### [SYSTEM RULE: Your Core Identity] ###");
+
+    for (final filename in fileList) {
+      final content = await rootBundle.loadString('assets/prompts/$filename');
+      if (filename.contains('core')) {
+        promptBuffer.writeln("\n[CORE IDENTITY - Never forget this]\n$content");
+      } else {
+        promptBuffer.writeln("\n[CONTEXTUAL RULE]\n$content");
+      }
+    }
+
+    promptBuffer.writeln("\n### [FINAL INSTRUCTION] ###");
+    promptBuffer.writeln("Maintain all the identity above, but always match the 'temperature' and 'pace' of the user's last message.");
+    promptBuffer.writeln("Always respond in the same language the user is currently using.");
+
+    return promptBuffer.toString();
+  }
 
   // 문장 대답
-  Future<String> fetchAnswer(String question) async {
+  Future<String> fetchAnswer(List<Message> history) async {
     try {
-      // 1️⃣ 곰돌이 프롬프트 파일 목록 읽기
-      final jsonString = await rootBundle.loadString('assets/prompts/chat.json');
-      final fileList = jsonDecode(jsonString)['files'];
+      final systemPrompt = await _buildSystemPrompt('assets/prompts/chat.json');
 
-      // 2️⃣ 시스템 프롬프트 병합 (모든 파일 내용 합치기)
-      String systemPrompt = '';
-      for (final filename in fileList) {
-        final content = await rootBundle.loadString('assets/prompts/$filename');
-        systemPrompt += '\n\n$content';
-      }
+      // 최근 20개만 사용 (10번 대화 왕복)
+      final recentHistory = history.length > 25
+          ? history.sublist(history.length - 25)
+          : history;
 
-      // 3️⃣ API 요청
+      // 히스토리 → GPT 형식 변환
+      final historyMessages = recentHistory.map((m) => {
+        "role": m.msgType == MessageType.user ? "user" : "assistant",
+        "content": m.msg,
+      }).toList();
+
       final response = await _client.post(
         Uri.parse('https://api.openai.com/v1/chat/completions'),
         headers: {
@@ -38,42 +59,33 @@ class AIService {
         body: jsonEncode({
           "model": "gpt-4o-mini",
           "max_tokens": 300,
-          "temperature": 0.8,
+          "temperature": 0.7,
+          "presence_penalty": 0.0,
+          "frequency_penalty": 0.3,
           "messages": [
             {"role": "system", "content": systemPrompt},
-            {"role": "user", "content": question}
+            ...historyMessages,  // 마지막이 user 메시지이므로 따로 붙일 필요 없음
           ]
         }),
       );
 
       if (response.statusCode != 200) throw Exception(response.body);
       final data = jsonDecode(response.body);
-      final answer = data['choices'][0]['message']['content'];
-      return answer;
+      return data['choices'][0]['message']['content'];
+
     } catch (e, st) {
-      log('ChatRemoteDataSource.fetchAnswer error: $e\n$st');
-      // rethrow;
+      log('fetchAnswer error: $e\n$st');
       return AppStrings.tr('error_api');
     }
   }
 
   Future<String> generateDiary(List<Message> todayChats, {
-    int diaryLength = 500,  // 기본값 설정
+    int diaryLength = 500,
   }) async {
-    try{
-      // 일기작성용 프롬프트 로드
-      final diaryPrompt = await rootBundle.loadString('assets/prompts/diary.json');
-      final fileList = jsonDecode(diaryPrompt)['files'];
-      //
-      String systemPrompt = '';
-      for (final filename in fileList) {
-        final content = await rootBundle.loadString('assets/prompts/$filename');
-        systemPrompt += '\n\n$content';
-      }
+    try {
+      final systemPrompt = await _buildSystemPrompt('assets/prompts/diary.json');
+      final conversationHistory = _formatChatsForGPT(todayChats);
 
-      // 2️⃣ 오늘 대화 내용 포맷팅
-      String conversationHistory = _formatChatsForGPT(todayChats);
-      // 4️⃣ API 요청 (여기부터 추가!)
       final response = await _client.post(
         Uri.parse('https://api.openai.com/v1/chat/completions'),
         headers: {
@@ -83,7 +95,8 @@ class AIService {
         body: jsonEncode({
           "model": "gpt-4o-mini",
           "max_tokens": diaryLength,
-          "temperature": 0.8,
+          "temperature": 0.85,
+          "top_p": 0.95,
           "messages": [
             {"role": "system", "content": systemPrompt},
             {"role": "user", "content": conversationHistory}
@@ -92,38 +105,31 @@ class AIService {
       );
 
       if (response.statusCode != 200) throw Exception(response.body);
-
       final data = jsonDecode(response.body);
-      final diary = data['choices'][0]['message']['content'];
+      return data['choices'][0]['message']['content'];
 
-      return diary;
-
-    }catch(e, st){
-      log('ChatRemoteDataSource.generateDiary error: $e\n$st');
+    } catch (e, st) {
+      log('generateDiary error: $e\n$st');
       return AppStrings.tr('error_diary_generation');
     }
   }
 
-  // 헬퍼 함수
   String _formatChatsForGPT(List<Message> chats) {
     StringBuffer buffer = StringBuffer();
-    buffer.writeln("오늘 사용자와 나눈 대화:");
+    buffer.writeln("Conversation between the user and Brownie today:");
     buffer.writeln("---");
 
     for (final chat in chats) {
       if (chat.msgType == MessageType.user) {
-        buffer.writeln("사용자: ${chat.msg}");
+        buffer.writeln("User: ${chat.msg}");
       } else {
-        buffer.writeln("곰돌이: ${chat.msg}");
+        buffer.writeln("Brownie: ${chat.msg}");
       }
     }
 
     buffer.writeln("---");
-    buffer.writeln("위 대화를 바탕으로 따뜻한 일기를 작성해줘.");
+    buffer.writeln("Based on the conversation above, write a warm diary entry as instructed.");
 
     return buffer.toString();
   }
 }
-
-
-

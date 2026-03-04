@@ -97,12 +97,13 @@ flutter:
     - assets/images/splash/
     - assets/.env
     - assets/prompts/
-    - assets/prompts/core/
+    - assets/prompts/character/
+    - assets/prompts/character/like/
     - assets/prompts/chat/
-#    - assets/prompts/dev/
     - assets/prompts/diary/
     - assets/prompts/ethic/
     - assets/prompts/style/
     - assets/prompts/tarot/
+#    - assets/prompts/dev/
 #    - assets/prompts/quotes/
 #    - assets/prompts/reading/
